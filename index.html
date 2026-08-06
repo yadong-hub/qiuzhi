@@ -3256,22 +3256,24 @@ loadData(function() {
       }
       var sourceData = fetchRows[0].data;
 
-      // 2. Try PATCH (proven to work — same as saveData). If row exists, it updates; if not, 0 rows affected.
+      // 2. PATCH with return=minimal (return=representation causes 409 on Supabase)
       var patchRes = await fetch(SUPA_URL + '?user_id=eq.' + encodeURIComponent(toUser), {
         method: 'PATCH',
         headers: {
           'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY,
-          'Content-Type': 'application/json', 'Prefer': 'return=representation'
+          'Content-Type': 'application/json', 'Prefer': 'return=minimal'
         },
         body: JSON.stringify({ data: sourceData, updated_at: new Date().toISOString() })
       });
-
       if (!patchRes.ok) throw new Error('PATCH 失败 (HTTP ' + patchRes.status + ')');
-      var patchRows = await patchRes.json();
 
-      // 3. If 0 rows patched → target user has never logged in, no data row exists yet
-      if (!patchRows || patchRows.length === 0) {
-        // Create empty row, then PATCH again
+      // 3. Verify: read back to check if row existed
+      var verifyRes = await fetch(SUPA_URL + '?user_id=eq.' + encodeURIComponent(toUser) + '&select=data', {
+        headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
+      });
+      var verifyRows = verifyRes.ok ? await verifyRes.json() : [];
+      if (!verifyRows || verifyRows.length === 0 || !verifyRows[0].data) {
+        // Row didn't exist — create empty row, then PATCH again
         var createRes = await fetch(SUPA_URL, {
           method: 'POST',
           headers: {
@@ -3287,7 +3289,7 @@ loadData(function() {
         if (!createRes.ok) {
           throw new Error('目标账号数据行创建失败 (HTTP ' + createRes.status + ')。请先用目标账号登录一次再分享');
         }
-        // Now PATCH again
+        // PATCH again with actual data
         var patchRes2 = await fetch(SUPA_URL + '?user_id=eq.' + encodeURIComponent(toUser), {
           method: 'PATCH',
           headers: {
@@ -3297,14 +3299,15 @@ loadData(function() {
           body: JSON.stringify({ data: sourceData, updated_at: new Date().toISOString() })
         });
         if (!patchRes2.ok) throw new Error('数据写入失败 (HTTP ' + patchRes2.status + ')');
+        // Verify again
+        var verifyRes2 = await fetch(SUPA_URL + '?user_id=eq.' + encodeURIComponent(toUser) + '&select=data', {
+          headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
+        });
+        verifyRows = verifyRes2.ok ? await verifyRes2.json() : [];
       }
 
-      // 4. Verify
-      var verifyRes = await fetch(SUPA_URL + '?user_id=eq.' + encodeURIComponent(toUser) + '&select=data', {
-        headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
-      });
-      var verifyRows = verifyRes.ok ? await verifyRes.json() : [];
-      if (!verifyRows || verifyRows.length === 0 || !verifyRows[0].data) {
+      // 4. Final verification
+      if (!verifyRows || verifyRows.length === 0 || !verifyRows[0].data || !verifyRows[0].data.records) {
         throw new Error('验证失败：数据库中未找到目标数据');
       }
       var verifyCount = verifyRows[0].data.records ? verifyRows[0].data.records.length : 0;
