@@ -1145,9 +1145,8 @@ function doLogout() {
     isLoggedIn = false;
     sessionStorage.removeItem('job_tracker_user');
     updateLoginUI();
-    // Reload demo data
+    // Reload demo data (do NOT save to localStorage - avoid polluting user cache)
     seedDemo();
-    saveDataLocal();
     renderAll();
     toast('已退出登录，当前为演示数据');
   }
@@ -1220,11 +1219,8 @@ function loadUserData(username, callback) {
       SYNC_MODE = false;
       updateSyncBadge(false);
       console.warn('云端不可达: ' + err.message);
-      // Try localStorage cache for this user
-      try {
-        var raw = localStorage.getItem(STORAGE_KEY + '_' + username);
-        if (raw) { DATA = JSON.parse(raw); migrateRecords(); }
-      } catch(e) {}
+      // Initialize with empty data when offline (never load stale localStorage cache)
+      DATA = { records: [], settings: { dashSections: ['records','interviews','interview_records','stats','timeline'] } };
       if (callback) callback();
     });
 }
