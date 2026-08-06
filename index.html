@@ -680,6 +680,22 @@ tr:hover td { background:#f8fafc; }
 .admin-reset-row button.cancel:hover { background: #e2e8f0; }
 .admin-create-row select { padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; background: #f8fafc; color: var(--text); cursor: pointer; }
 .admin-create-row select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+.admin-share-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.admin-share-row label { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+.admin-share-row select {
+  flex: 1; padding: 8px 10px; border: 1.5px solid var(--border);
+  border-radius: 8px; font-size: 13px; font-family: inherit; outline: none;
+  background: #f8fafc; color: var(--text); cursor: pointer; min-width: 0;
+}
+.admin-share-row select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+.admin-share-btn {
+  padding: 8px 20px; border-radius: 8px; border: none;
+  background: linear-gradient(135deg,#059669,#10b981); color: #fff;
+  font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer;
+  white-space: nowrap; transition: all 0.2s;
+}
+.admin-share-btn:hover { background: linear-gradient(135deg,#047857,#059669); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(5,150,105,0.3); }
+.admin-share-warn { font-size: 11px; color: #dc2626; background: #fef2f2; padding: 8px 10px; border-radius: 6px; margin-top: 8px; display: none; }
 
 .unlocked { opacity: 1; pointer-events: auto; user-select: auto; }
 #exportBtn.locked { display: none !important; }
@@ -2849,6 +2865,19 @@ loadData(function() {
       </div>
     </div>
     
+    <div class="admin-section">
+      <h4>数据分享</h4>
+      <div class="admin-share-row">
+        <label>从</label>
+        <select id="shareFromUser"><option value="">-- 选择来源账号 --</option></select>
+        <label>分享到</label>
+        <select id="shareToUser"><option value="">-- 选择目标账号 --</option></select>
+        <button class="admin-share-btn" id="shareDataBtn">确认分享</button>
+      </div>
+      <div class="admin-share-warn" id="shareWarn">⚠ 此操作将覆盖目标账号的全部求职数据，请谨慎操作</div>
+      <div class="admin-msg" id="shareMsg"></div>
+    </div>
+    
     <div class="admin-reset-modal" id="resetPwdModal" style="display:none">
       <p>重置 <strong id="resetTargetUser"></strong> 的密码：</p>
       <div class="admin-reset-row">
@@ -2895,6 +2924,12 @@ loadData(function() {
   var resetPwdCancel = document.getElementById('resetPwdCancel');
   var resettingUserId = null;
 
+  var shareFromUser = document.getElementById('shareFromUser');
+  var shareToUser = document.getElementById('shareToUser');
+  var shareDataBtn = document.getElementById('shareDataBtn');
+  var shareMsg = document.getElementById('shareMsg');
+  var shareWarn = document.getElementById('shareWarn');
+
   function openAdmin() {
     adminOverlay.style.display = 'flex';
     createMsg.textContent = '';
@@ -2917,8 +2952,10 @@ loadData(function() {
       var rows = await res.json();
       if (rows.length === 0) {
         accountTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:16px">暂无账号</td></tr>';
+        populateShareDropdowns([]);
         return;
       }
+      populateShareDropdowns(rows);
       accountTableBody.innerHTML = rows.map(function(r) {
         var d = r.created_at ? r.created_at.slice(0,10) : '-';
         var roleClass = 'role-' + r.role;
@@ -3096,6 +3133,93 @@ loadData(function() {
     createAccountBtn.textContent = '创建';
   }
 
+  function populateShareDropdowns(rows) {
+    var opts = '<option value="">-- 选择账号 --</option>';
+    for (var i = 0; i < rows.length; i++) {
+      opts += '<option value="'+rows[i].username+'">'+rows[i].username+' ('+(rows[i].role==='admin'?'管理员':'用户')+')</option>';
+    }
+    shareFromUser.innerHTML = opts;
+    shareToUser.innerHTML = opts;
+  }
+
+  async function shareData() {
+    var fromUser = shareFromUser.value;
+    var toUser = shareToUser.value;
+    shareMsg.textContent = '';
+    shareMsg.className = 'admin-msg';
+    shareWarn.style.display = 'none';
+
+    if (!fromUser) { shareMsg.textContent = '请选择来源账号'; shareMsg.className = 'admin-msg error'; return; }
+    if (!toUser) { shareMsg.textContent = '请选择目标账号'; shareMsg.className = 'admin-msg error'; return; }
+    if (fromUser === toUser) { shareMsg.textContent = '来源和目标不能是同一个账号'; shareMsg.className = 'admin-msg error'; return; }
+
+    shareWarn.style.display = '';
+    if (!confirm('确定要将「'+fromUser+'」的求职数据覆盖到「'+toUser+'」吗？\n\n目标账号的现有数据将被替换，此操作不可撤销。')) {
+      shareWarn.style.display = 'none';
+      return;
+    }
+
+    shareDataBtn.disabled = true;
+    shareDataBtn.textContent = '分享中...';
+
+    try {
+      // 1. Fetch source user's data
+      var fetchRes = await fetch(SUPA_URL + '?user_id=eq.' + encodeURIComponent(fromUser) + '&select=data', {
+        headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
+      });
+      if (!fetchRes.ok) throw new Error('获取来源数据失败 (HTTP ' + fetchRes.status + ')');
+      var fetchRows = await fetchRes.json();
+      if (!fetchRows || fetchRows.length === 0 || !fetchRows[0].data) {
+        throw new Error('来源账号「'+fromUser+'」暂无求职数据');
+      }
+      var sourceData = fetchRows[0].data;
+
+      // 2. Check if target user has existing data row
+      var checkRes = await fetch(SUPA_URL + '?user_id=eq.' + encodeURIComponent(toUser) + '&select=user_id', {
+        headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
+      });
+      var checkRows = checkRes.ok ? await checkRes.json() : [];
+
+      // 3. Upsert target user's data
+      var upsertRes;
+      if (checkRows && checkRows.length > 0) {
+        // Update existing row
+        upsertRes = await fetch(SUPA_URL + '?user_id=eq.' + encodeURIComponent(toUser), {
+          method: 'PATCH',
+          headers: {
+            'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY,
+            'Content-Type': 'application/json', 'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({ data: sourceData, updated_at: new Date().toISOString() })
+        });
+      } else {
+        // Insert new row
+        upsertRes = await fetch(SUPA_URL, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY,
+            'Content-Type': 'application/json', 'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({ user_id: toUser, data: sourceData, updated_at: new Date().toISOString() })
+        });
+      }
+      if (!upsertRes.ok) throw new Error('写入目标数据失败 (HTTP ' + upsertRes.status + ')');
+
+      var recordCount = sourceData.records ? sourceData.records.length : 0;
+      shareMsg.textContent = '分享成功！已将「'+fromUser+'」的 ' + recordCount + ' 条求职记录同步到「'+toUser+'」';
+      shareMsg.className = 'admin-msg success';
+      shareWarn.style.display = 'none';
+      shareFromUser.value = '';
+      shareToUser.value = '';
+    } catch(e) {
+      shareMsg.textContent = '分享失败: ' + e.message;
+      shareMsg.className = 'admin-msg error';
+    }
+
+    shareDataBtn.disabled = false;
+    shareDataBtn.textContent = '确认分享';
+  }
+
   if (adminBtn) adminBtn.addEventListener('click', openAdmin);
   if (adminClose) adminClose.addEventListener('click', closeAdmin);
   if (adminOverlay) {
@@ -3104,6 +3228,7 @@ loadData(function() {
   if (createAccountBtn) createAccountBtn.addEventListener('click', createAccount);
   if (resetPwdConfirm) resetPwdConfirm.addEventListener('click', doResetPwd);
   if (resetPwdCancel) resetPwdCancel.addEventListener('click', function() { resetPwdModal.style.display = 'none'; resettingUserId = null; });
+  if (shareDataBtn) shareDataBtn.addEventListener('click', shareData);
 
   // ==================== Login bindings ====================
   var loginBtn = document.getElementById('loginBtn');
