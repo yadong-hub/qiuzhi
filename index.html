@@ -746,7 +746,7 @@ tr:hover td { background:#f8fafc; }
       </div>
       <div class="quick-card act-lock" id="quickInterview">
         <div class="quick-icon">🎤</div>
-        <div><div class="quick-title">记录面试</div><div class="quick-sub">快速记录面试日期和内容</div></div>
+        <div><div class="quick-title">记录面试</div><div class="quick-sub">记录公司、职位及面试详情</div></div>
       </div>
     </div>
     <!-- Stats -->
@@ -939,66 +939,117 @@ tr:hover td { background:#f8fafc; }
 
 <!-- Quick Interview Modal -->
 <div class="modal-overlay" id="quickModal">
-  <div class="modal" style="max-width:600px">
+  <div class="modal" style="max-width:760px">
     <div class="modal-head">
       <div class="modal-title">记录面试</div>
       <button class="modal-close" id="quickModalClose">&times;</button>
     </div>
     <div class="modal-body">
-      <div class="form-group">
-        <label>选择公司 *</label>
-        <select id="qCompany" style="width:100%"></select>
-      </div>
       <div class="form-row">
         <div class="form-group">
-          <label>面试日期 *</label>
-          <input type="date" id="qDate">
+          <label>公司名称 *</label>
+          <input type="text" id="qCompany" placeholder="如：字节跳动">
         </div>
         <div class="form-group">
-          <label>面试轮次</label>
-          <select id="qRound">
-            <option>一面</option><option>二面</option><option>三面</option><option>四面</option>
-            <option>HR面</option><option>终面</option>
-          </select>
+          <label>职位名称 *</label>
+          <input type="text" id="qPosition" placeholder="如：前端开发工程师">
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>面试方式</label>
-          <select id="qMethod">
-            <option value="">请选择</option>
-            <option>线下面试</option><option>视频面试</option><option>电话面试</option>
-          </select>
+          <label>城市</label>
+          <input type="text" id="qCity" placeholder="如：深圳">
         </div>
         <div class="form-group">
-          <label>面试时长（分钟）</label>
-          <input type="number" id="qDuration" placeholder="如：45" min="1" max="300">
+          <label>投递渠道</label>
+          <select id="qChannel"></select>
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>面试官</label>
-          <input type="text" id="qInterviewer" placeholder="如：张经理 / 王工">
+          <label>投递日期 *</label>
+          <input type="date" id="qApplyDate">
         </div>
         <div class="form-group">
-          <label>面试结果</label>
-          <select id="qResult">
-            <option value="">暂无结果</option>
-            <option>通过</option><option>待定</option><option>未通过</option>
-          </select>
+          <label>薪资范围</label>
+          <input type="text" id="qSalary" placeholder="如：25-35K·15薪">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>初步状态</label>
+          <select id="qPrelimStatus"></select>
+        </div>
+        <div class="form-group">
+          <label>具体进展</label>
+          <select id="qProgressStatus"></select>
         </div>
       </div>
       <div class="form-group">
-        <label>技术考察点 / 面试问题</label>
-        <textarea id="qTechPoints" rows="2" placeholder="面试中问了哪些技术问题？考察了哪些知识点？"></textarea>
+        <label>HR 联系方式</label>
+        <input type="text" id="qContact" placeholder="如：微信 / 电话">
       </div>
       <div class="form-group">
-        <label>面试总结</label>
-        <textarea id="qSummary" rows="3" placeholder="整体感受、回答情况、需要改进的地方..."></textarea>
+        <label>JD 链接</label>
+        <input type="text" id="qLink" placeholder="职位链接（可选）">
       </div>
       <div class="form-group">
-        <label>自我评价</label>
-        <textarea id="qSelfEval" rows="2" placeholder="给自己这次面试打几分？哪里表现好？哪里没做好？"></textarea>
+        <label>备注</label>
+        <textarea id="qNote" rows="2" placeholder="其他备注信息..."></textarea>
+      </div>
+      <div style="border-top:2px dashed #e2e8f0;margin:18px 0 14px;padding-top:14px">
+        <div style="font-weight:600;font-size:14px;color:#2563eb;margin-bottom:12px">面试信息</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>面试日期 *</label>
+            <input type="date" id="qDate">
+          </div>
+          <div class="form-group">
+            <label>面试轮次</label>
+            <select id="qRound">
+              <option>一面</option><option>二面</option><option>三面</option><option>四面</option>
+              <option>HR面</option><option>终面</option><option>AI面试</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>面试方式</label>
+            <select id="qMethod">
+              <option value="">请选择</option>
+              <option>线下面试</option><option>视频面试</option><option>电话面试</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>面试时长（分钟）</label>
+            <input type="number" id="qDuration" placeholder="如：45" min="1" max="300">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>面试官</label>
+            <input type="text" id="qInterviewer" placeholder="如：张经理 / 王工">
+          </div>
+          <div class="form-group">
+            <label>面试结果</label>
+            <select id="qResult">
+              <option value="">暂无结果</option>
+              <option>通过</option><option>待定</option><option>未通过</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>技术考察点 / 面试问题</label>
+          <textarea id="qTechPoints" rows="2" placeholder="面试中问了哪些技术问题？考察了哪些知识点？"></textarea>
+        </div>
+        <div class="form-group">
+          <label>面试总结</label>
+          <textarea id="qSummary" rows="3" placeholder="整体感受、回答情况、需要改进的地方..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>自我评价</label>
+          <textarea id="qSelfEval" rows="2" placeholder="给自己这次面试打几分？哪里表现好？哪里没做好？"></textarea>
+        </div>
       </div>
     </div>
     <div class="modal-foot">
@@ -2368,7 +2419,7 @@ function openModal(id) {
     setVal('fContact', r.contact||'');
     setVal('fLink', r.link||'');
     setVal('fNote', r.note||'');
-    tempInterviews = (r.interviews||[]).map(function(x) { return {date:x.date, round:x.round, interviewer:x.interviewer, summary:x.summary}; });
+    tempInterviews = (r.interviews||[]).map(function(x) { return {date:x.date, round:x.round, method:x.method||'', duration:x.duration||'', interviewer:x.interviewer||'', result:x.result||'', techPoints:x.techPoints||'', summary:x.summary||'', selfEval:x.selfEval||''}; });
   } else {
     setVal('fCompany', '');
     setVal('fPosition', '');
@@ -2470,6 +2521,25 @@ function saveRecord() {
     }
   }
 
+  // Auto-compute prelimStatus and progressStatus based on interviews
+  if (rec.interviews.length > 0) {
+    // Has interviews → ensure prelimStatus is at least screening_pass
+    if (!rec.prelimStatus || rec.prelimStatus === 'pending' || rec.prelimStatus === 'applied' || rec.prelimStatus === 'screening') {
+      rec.prelimStatus = 'screening_pass';
+    }
+    // Compute progressStatus from the last interview round
+    var lastRound = rec.interviews[rec.interviews.length - 1].round || '';
+    if (lastRound === '一面') rec.progressStatus = 'round1';
+    else if (lastRound === '二面') rec.progressStatus = 'round2';
+    else if (lastRound === '三面' || lastRound === '四面' || lastRound === '终面') rec.progressStatus = 'final_round';
+    else if (lastRound === 'AI面试') rec.progressStatus = 'ai_interview';
+    else if (lastRound === 'HR面') rec.progressStatus = 'round1';
+    else if (!rec.progressStatus) rec.progressStatus = 'round1';
+  } else {
+    // No interviews → clear progressStatus
+    rec.progressStatus = '';
+  }
+
   if (editingId) {
     for (var i=0; i<DATA.records.length; i++) {
       if (DATA.records[i].id === editingId) { DATA.records[i] = rec; break; }
@@ -2499,35 +2569,37 @@ function deleteRecord(id) {
 // ==================== Quick Interview ====================
 function openQuickInterview() {
   if (!checkLogin()) return;
-  if (DATA.records.length === 0) {
-    toast('请先新增一条投递记录');
-    openModal();
-    return;
-  }
-  var sel = document.getElementById('qCompany');
-  if (!sel) return;
-  sel.innerHTML = '';
-  for (var i=0; i<DATA.records.length; i++) {
-    sel.innerHTML += '<option value="'+DATA.records[i].id+'">'+DATA.records[i].company+' · '+(DATA.records[i].position||'')+'</option>';
-  }
-  var dateEl = document.getElementById('qDate');
-  if (dateEl) dateEl.value = new Date().toISOString().slice(0,10);
-  var roundEl = document.getElementById('qRound');
-  if (roundEl) roundEl.value = '一面';
-  var methodEl = document.getElementById('qMethod');
-  if (methodEl) methodEl.value = '';
-  var durationEl = document.getElementById('qDuration');
-  if (durationEl) durationEl.value = '';
-  var interviewerEl = document.getElementById('qInterviewer');
-  if (interviewerEl) interviewerEl.value = '';
-  var resultEl = document.getElementById('qResult');
-  if (resultEl) resultEl.value = '';
-  var techEl = document.getElementById('qTechPoints');
-  if (techEl) techEl.value = '';
-  var summaryEl = document.getElementById('qSummary');
-  if (summaryEl) summaryEl.value = '';
-  var selfEvalEl = document.getElementById('qSelfEval');
-  if (selfEvalEl) selfEvalEl.value = '';
+  // Init dropdowns
+  var el;
+  el = document.getElementById('qChannel');
+  if (el) { el.innerHTML = ''; for (var i=0; i<CHANNELS.length; i++) { el.innerHTML += '<option value="'+CHANNELS[i]+'">'+CHANNELS[i]+'</option>'; } }
+  el = document.getElementById('qPrelimStatus');
+  if (el) { el.innerHTML = ''; for (var i=0; i<PRELIM_STATUS_LIST.length; i++) { el.innerHTML += '<option value="'+PRELIM_STATUS_LIST[i].key+'">'+PRELIM_STATUS_LIST[i].label+'</option>'; } }
+  el = document.getElementById('qProgressStatus');
+  if (el) { el.innerHTML = ''; for (var i=0; i<PROGRESS_STATUS_LIST.length; i++) { el.innerHTML += '<option value="'+PROGRESS_STATUS_LIST[i].key+'">'+PROGRESS_STATUS_LIST[i].label+'</option>'; } }
+  // Clear text inputs
+  var today = new Date().toISOString().slice(0,10);
+  var setVal = function(id, val) { var e = document.getElementById(id); if (e) e.value = val; };
+  setVal('qCompany', '');
+  setVal('qPosition', '');
+  setVal('qCity', '');
+  setVal('qApplyDate', today);
+  setVal('qSalary', '');
+  setVal('qContact', '');
+  setVal('qLink', '');
+  setVal('qNote', '');
+  setVal('qPrelimStatus', 'applied');
+  setVal('qProgressStatus', '');
+  // Interview fields
+  setVal('qDate', today);
+  setVal('qRound', '一面');
+  setVal('qMethod', '');
+  setVal('qDuration', '');
+  setVal('qInterviewer', '');
+  setVal('qResult', '');
+  setVal('qTechPoints', '');
+  setVal('qSummary', '');
+  setVal('qSelfEval', '');
   var qm = document.getElementById('quickModal');
   if (qm) qm.classList.add('show');
 }
@@ -2539,58 +2611,65 @@ function closeQuickModal() {
 
 function saveQuickInterview() {
   if (!checkLogin()) return;
-  var recordIdEl = document.getElementById('qCompany');
-  var dateEl = document.getElementById('qDate');
-  var recordId = recordIdEl ? recordIdEl.value : '';
-  var date = dateEl ? dateEl.value : '';
-  if (!recordId) { toast('请选择公司'); return; }
-  if (!date) { toast('请选择面试日期'); return; }
+  var gv = function(id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  var gvRaw = function(id) { var el = document.getElementById(id); return el ? el.value : ''; };
 
-  var record = null;
-  for (var i=0; i<DATA.records.length; i++) {
-    if (DATA.records[i].id === recordId) { record = DATA.records[i]; break; }
+  var company = gv('qCompany');
+  var position = gv('qPosition');
+  var applyDate = gvRaw('qApplyDate');
+  var ivDate = gvRaw('qDate');
+
+  if (!company) { toast('请填写公司名称'); return; }
+  if (!position) { toast('请填写职位名称'); return; }
+  if (!applyDate) { toast('请选择投递日期'); return; }
+  if (!ivDate) { toast('请选择面试日期'); return; }
+
+  var rec = {
+    id: uid(),
+    company: company,
+    position: position,
+    city: gv('qCity'),
+    channel: gvRaw('qChannel') || 'BOSS直聘',
+    date: applyDate,
+    prelimStatus: gvRaw('qPrelimStatus') || 'applied',
+    progressStatus: gvRaw('qProgressStatus') || '',
+    salary: gv('qSalary'),
+    contact: gv('qContact'),
+    link: gv('qLink'),
+    note: gv('qNote'),
+    interviews: [{
+      date: ivDate,
+      round: gvRaw('qRound') || '一面',
+      method: gvRaw('qMethod') || '',
+      duration: gvRaw('qDuration') || '',
+      interviewer: gv('qInterviewer'),
+      result: gvRaw('qResult') || '',
+      techPoints: gv('qTechPoints'),
+      summary: gv('qSummary'),
+      selfEval: gv('qSelfEval')
+    }]
+  };
+
+  // Auto-promote prelim status if not passed screening yet
+  if (!rec.prelimStatus || rec.prelimStatus === 'pending' || rec.prelimStatus === 'applied' || rec.prelimStatus === 'screening') {
+    rec.prelimStatus = 'screening_pass';
   }
-  if (!record) return;
-  if (!record.interviews) record.interviews = [];
-
-  var roundEl = document.getElementById('qRound');
-  var interviewerEl = document.getElementById('qInterviewer');
-  var summaryEl = document.getElementById('qSummary');
-  var methodEl = document.getElementById('qMethod');
-  var durationEl = document.getElementById('qDuration');
-  var resultEl = document.getElementById('qResult');
-  var techEl = document.getElementById('qTechPoints');
-  var selfEvalEl = document.getElementById('qSelfEval');
-
-  record.interviews.push({
-    date: date,
-    round: roundEl ? roundEl.value : '',
-    method: methodEl ? methodEl.value : '',
-    duration: durationEl ? durationEl.value : '',
-    interviewer: interviewerEl ? interviewerEl.value.trim() : '',
-    result: resultEl ? resultEl.value : '',
-    techPoints: techEl ? techEl.value.trim() : '',
-    summary: summaryEl ? summaryEl.value.trim() : '',
-    selfEval: selfEvalEl ? selfEvalEl.value.trim() : ''
-  });
-
-  // Auto-promote to screening_pass + appropriate progressStatus
-  if (!record.prelimStatus || record.prelimStatus === 'pending' || record.prelimStatus === 'applied' || record.prelimStatus === 'screening') {
-    record.prelimStatus = 'screening_pass';
+  // Auto-set progressStatus based on round
+  if (!rec.progressStatus) {
+    var round = gvRaw('qRound') || '一面';
+    if (round === '一面') rec.progressStatus = 'round1';
+    else if (round === '二面') rec.progressStatus = 'round2';
+    else if (round === '三面' || round === '四面' || round === '终面') rec.progressStatus = 'final_round';
+    else if (round === 'AI面试') rec.progressStatus = 'ai_interview';
+    else if (round === 'HR面') rec.progressStatus = 'round1';
+    else rec.progressStatus = 'round1';
   }
-  // Set progressStatus based on round
-  var round = roundEl ? roundEl.value : '';
-  if (!record.progressStatus) {
-    if (round === '一面') record.progressStatus = 'round1';
-    else if (round === '二面') record.progressStatus = 'round2';
-    else if (round === '三面' || round === '终面') record.progressStatus = 'final_round';
-    else if (round === 'AI面试') record.progressStatus = 'ai_interview';
-    else record.progressStatus = 'round1';
-  }
+
+  DATA.records.push(rec);
   saveData();
   closeQuickModal();
   renderAll();
-  toast('面试记录已保存');
+  toast('投递记录和面试信息已保存');
 }
 
 // ==================== Dashboard Toggle Events ====================
@@ -3173,36 +3252,35 @@ loadData(function() {
       }
       var sourceData = fetchRows[0].data;
 
-      // 2. Check if target user has existing data row
-      var checkRes = await fetch(SUPA_URL + '?user_id=eq.' + encodeURIComponent(toUser) + '&select=user_id', {
-        headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
+      // 2. Try PATCH first (update existing row) with return=representation to know if rows matched
+      var patchRes = await fetch(SUPA_URL + '?user_id=eq.' + encodeURIComponent(toUser), {
+        method: 'PATCH',
+        headers: {
+          'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY,
+          'Content-Type': 'application/json', 'Prefer': 'return=representation'
+        },
+        body: JSON.stringify({ data: sourceData, updated_at: new Date().toISOString() })
       });
-      var checkRows = checkRes.ok ? await checkRes.json() : [];
 
-      // 3. Upsert target user's data
-      var upsertRes;
-      if (checkRows && checkRows.length > 0) {
-        // Update existing row
-        upsertRes = await fetch(SUPA_URL + '?user_id=eq.' + encodeURIComponent(toUser), {
-          method: 'PATCH',
-          headers: {
-            'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY,
-            'Content-Type': 'application/json', 'Prefer': 'return=minimal'
-          },
-          body: JSON.stringify({ data: sourceData, updated_at: new Date().toISOString() })
-        });
+      if (patchRes.ok) {
+        var patchRows = await patchRes.json();
+        if (!patchRows || patchRows.length === 0) {
+          // PATCH matched 0 rows → target user has no data row yet, try POST to create
+          var postRes = await fetch(SUPA_URL, {
+            method: 'POST',
+            headers: {
+              'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY,
+              'Content-Type': 'application/json', 'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify({ user_id: toUser, data: sourceData, updated_at: new Date().toISOString() })
+          });
+          if (!postRes.ok) {
+            throw new Error('创建目标数据失败 (HTTP ' + postRes.status + ')。请确认 job_data 表 user_id 有唯一约束');
+          }
+        }
       } else {
-        // Insert new row
-        upsertRes = await fetch(SUPA_URL, {
-          method: 'POST',
-          headers: {
-            'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY,
-            'Content-Type': 'application/json', 'Prefer': 'return=minimal'
-          },
-          body: JSON.stringify({ user_id: toUser, data: sourceData, updated_at: new Date().toISOString() })
-        });
+        throw new Error('更新目标数据失败 (HTTP ' + patchRes.status + ')。可能需要调整 Supabase RLS 策略');
       }
-      if (!upsertRes.ok) throw new Error('写入目标数据失败 (HTTP ' + upsertRes.status + ')');
 
       var recordCount = sourceData.records ? sourceData.records.length : 0;
       shareMsg.textContent = '分享成功！已将「'+fromUser+'」的 ' + recordCount + ' 条求职记录同步到「'+toUser+'」';
