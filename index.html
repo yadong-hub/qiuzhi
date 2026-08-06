@@ -3252,26 +3252,42 @@ loadData(function() {
       }
       var sourceData = fetchRows[0].data;
 
-      // 2. DELETE existing target row (if any), then INSERT — guaranteed replace
-      await fetch(SUPA_URL + '?user_id=eq.' + encodeURIComponent(toUser), {
+      // 2. DELETE existing target row, then INSERT with return=representation to verify
+      var delRes = await fetch(SUPA_URL + '?user_id=eq.' + encodeURIComponent(toUser), {
         method: 'DELETE',
         headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
       });
+      console.log('share DELETE status:', delRes.status);
 
       var insertRes = await fetch(SUPA_URL, {
         method: 'POST',
         headers: {
           'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY,
-          'Content-Type': 'application/json', 'Prefer': 'return=minimal'
+          'Content-Type': 'application/json', 'Prefer': 'return=representation'
         },
         body: JSON.stringify({ user_id: toUser, data: sourceData, updated_at: new Date().toISOString() })
       });
       if (!insertRes.ok) {
         throw new Error('写入失败 (HTTP ' + insertRes.status + ')');
       }
+      var inserted = await insertRes.json();
+      console.log('share INSERT result:', JSON.stringify(inserted));
 
-      var recordCount = sourceData.records ? sourceData.records.length : 0;
-      shareMsg.textContent = '分享成功！已将「'+fromUser+'」的 ' + recordCount + ' 条求职记录同步到「'+toUser+'」';
+      // 3. Verify: read back from Supabase to confirm data is really there
+      var verifyRes = await fetch(SUPA_URL + '?user_id=eq.' + encodeURIComponent(toUser) + '&select=data', {
+        headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
+      });
+      if (!verifyRes.ok) throw new Error('验证失败 (HTTP ' + verifyRes.status + ')');
+      var verifyRows = await verifyRes.json();
+      if (!verifyRows || verifyRows.length === 0 || !verifyRows[0].data) {
+        throw new Error('写入验证失败：数据库中未找到目标数据。请检查 Supabase 表结构和权限');
+      }
+      var verifyCount = verifyRows[0].data.records ? verifyRows[0].data.records.length : 0;
+      if (verifyCount === 0) {
+        throw new Error('写入验证失败：目标数据 records 为空');
+      }
+
+      shareMsg.textContent = '分享成功！已将「'+fromUser+'」的 ' + verifyCount + ' 条求职记录同步到「'+toUser+'」（已验证）';
       shareMsg.className = 'admin-msg success';
       shareWarn.style.display = 'none';
       shareFromUser.value = '';
