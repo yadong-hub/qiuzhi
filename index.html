@@ -3252,39 +3252,17 @@ loadData(function() {
       }
       var sourceData = fetchRows[0].data;
 
-      // 2. PATCH + POST double-safe approach (do not rely on return=representation)
-      //    Step A: PATCH — updates if target row exists, silently no-op if not
-      var patchRes = await fetch(SUPA_URL + '?user_id=eq.' + encodeURIComponent(toUser), {
-        method: 'PATCH',
-        headers: {
-          'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY,
-          'Content-Type': 'application/json', 'Prefer': 'return=minimal'
-        },
-        body: JSON.stringify({ data: sourceData, updated_at: new Date().toISOString() })
-      });
-
-      // Step B: POST — creates row if target doesn't exist; 409 means row already existed (PATCH handled it)
-      var postRes = await fetch(SUPA_URL, {
+      // 2. Upsert to target user — single request, works whether row exists or not
+      var upsertRes = await fetch(SUPA_URL, {
         method: 'POST',
         headers: {
           'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY,
-          'Content-Type': 'application/json', 'Prefer': 'return=minimal'
+          'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates'
         },
         body: JSON.stringify({ user_id: toUser, data: sourceData, updated_at: new Date().toISOString() })
       });
-
-      // Step C: Check results
-      if (postRes.ok) {
-        // POST 201: new row created, done
-      } else if (postRes.status === 409 && patchRes.ok) {
-        // POST 409 (duplicate) + PATCH ok → row was updated by PATCH, done
-      } else if (postRes.status === 409 && !patchRes.ok) {
-        // Both failed: RLS likely blocking cross-user writes
-        throw new Error('数据写入被拒绝 (PATCH=' + patchRes.status + ' POST=409)。请在 Supabase 后台执行以下 SQL 放开 job_data 表的 RLS 策略：\nALTER TABLE job_data DISABLE ROW LEVEL SECURITY;');
-      } else if (!patchRes.ok) {
-        throw new Error('数据写入失败 (PATCH=' + patchRes.status + ' POST=' + postRes.status + ')。可能需要调整 Supabase RLS 策略');
-      } else {
-        throw new Error('数据写入失败 (POST=' + postRes.status + ')。请确认目标账号是否存在');
+      if (!upsertRes.ok) {
+        throw new Error('写入失败 (HTTP ' + upsertRes.status + ')。请确认 job_data 表 user_id 有 UNIQUE 约束且 RLS 已关闭');
       }
 
       var recordCount = sourceData.records ? sourceData.records.length : 0;
