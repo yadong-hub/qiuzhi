@@ -3252,17 +3252,22 @@ loadData(function() {
       }
       var sourceData = fetchRows[0].data;
 
-      // 2. Upsert to target user — single request, works whether row exists or not
-      var upsertRes = await fetch(SUPA_URL, {
+      // 2. DELETE existing target row (if any), then INSERT — guaranteed replace
+      await fetch(SUPA_URL + '?user_id=eq.' + encodeURIComponent(toUser), {
+        method: 'DELETE',
+        headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
+      });
+
+      var insertRes = await fetch(SUPA_URL, {
         method: 'POST',
         headers: {
           'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY,
-          'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates'
+          'Content-Type': 'application/json', 'Prefer': 'return=minimal'
         },
         body: JSON.stringify({ user_id: toUser, data: sourceData, updated_at: new Date().toISOString() })
       });
-      if (!upsertRes.ok) {
-        throw new Error('写入失败 (HTTP ' + upsertRes.status + ')。请确认 job_data 表 user_id 有 UNIQUE 约束且 RLS 已关闭');
+      if (!insertRes.ok) {
+        throw new Error('写入失败 (HTTP ' + insertRes.status + ')');
       }
 
       var recordCount = sourceData.records ? sourceData.records.length : 0;
