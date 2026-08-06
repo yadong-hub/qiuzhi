@@ -1,0 +1,3193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>求职记录 | Job Tracker</title>
+<style>
+:root {
+  --bg: #f0f4f8;
+  --card: #ffffff;
+  --primary: #2563eb;
+  --primary-light: #eff6ff;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --text-light: #94a3b8;
+  --border: #e2e8f0;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --radius: 14px;
+}
+
+html { min-height: 100%; }
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: linear-gradient(135deg, #eef4ff 0%, #f0f9ff 50%, #f8fafc 100%) fixed;
+  color: var(--text); font-size: 14px; line-height: 1.6;
+}
+.app { max-width:1200px; margin:0 auto; padding:0 20px 60px; }
+
+/* Header */
+.header {
+  position: sticky; top:0; z-index:100;
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 55%, #60a5fa 100%);
+  border-radius: 0 0 18px 18px;
+  padding:12px 0; margin-bottom:24px;
+  box-shadow: 0 4px 24px rgba(37,99,235,0.18);
+}
+.header .logo, .header .today, .header .login-link, .header .login-link:hover { color: #fff; }
+.header .login-link, .header .contact-link { border-color: rgba(255,255,255,0.65); background: rgba(255,255,255,0.12); }
+.header .login-link:hover, .header .contact-link:hover { background: rgba(255,255,255,0.28); border-color: #fff; }
+.header .login-link.logged { color: #16a34a; border-color: #16a34a; background: #f0fdf4; }
+.header .login-link.logged:hover { background: #16a34a; color: #fff; border-color: #16a34a; }
+.header .contact-link { color: #fff; }
+
+.header-inner { display:flex; align-items:center; justify-content:space-between; padding:0 24px; }
+.logo { display:flex; align-items:center; gap:12px; font-size:20px; font-weight:700; }
+.logo-icon { width:36px; height:36px; border-radius:10px; background: rgba(255,255,255,0.22); color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; }
+.today { font-size:13px; color:rgba(255,255,255,0.85); }
+
+/* Nav */
+.nav { display:flex; gap:6px; margin-bottom:20px; flex-wrap:wrap; }
+.nav-btn {
+  padding:9px 18px; border-radius:10px; border:none; background:#fff;
+  color:var(--text-muted); font-size:13px; cursor:pointer; font-weight:500;
+  transition: all 0.2s; font-family:inherit; white-space:nowrap;
+  box-shadow: 0 2px 6px rgba(30,41,59,0.05);
+}
+.nav-btn:hover { background:#f1f5f9; color:var(--text); box-shadow: 0 4px 10px rgba(37,99,235,0.10); }
+.nav-btn.active { background:linear-gradient(135deg,#2563eb,#3b82f6); color:#fff; box-shadow: 0 4px 12px rgba(37,99,235,0.25); }
+
+/* Quick Actions */
+.quick-bar {
+  display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:24px;
+}
+.quick-card {
+  border-radius:var(--radius); padding:18px 20px; cursor:pointer;
+  display:flex; align-items:center; gap:14px; transition:transform 0.15s,box-shadow 0.15s;
+  border:2px dashed #cbd5e1; background:#fff;
+}
+.quick-card:hover { transform:translateY(-2px); box-shadow: 0 8px 24px rgba(37,99,235,0.12); border-color:var(--primary); }
+.quick-card.primary { border-style:solid; border-color:var(--primary); background:linear-gradient(135deg,#eff6ff,#dbeafe); }
+.quick-icon { font-size:28px; }
+.quick-title { font-weight:600; font-size:15px; color:var(--text); }
+.quick-sub { font-size:12px; color:var(--text-muted); }
+
+/* Stats */
+.stats-grid { display:grid; grid-template-columns: repeat(4, 1fr); gap:16px; margin-bottom:24px; }
+.stat-card {
+  background:#fff; border-radius:var(--radius); padding:18px;
+  border:1px solid var(--border);
+  box-shadow: 0 4px 14px rgba(30,41,59,0.04);
+}
+.stat-card .icon { font-size:24px; margin-bottom:8px; }
+.stat-card .label { font-size:12px; color:var(--text-muted); margin-bottom:4px; }
+.stat-card .value { font-size:28px; font-weight:700; }
+.stat-card .sub { font-size:11px; color:var(--text-light); margin-top:4px; }
+
+/* Cards */
+.card { background:#fff; border-radius:var(--radius); border:1px solid var(--border); margin-bottom:20px; box-shadow: 0 4px 16px rgba(30,41,59,0.04); }
+.card-head { padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+.card-title { font-weight:600; font-size:15px; }
+.card-body { padding:20px; }
+
+/* Table */
+table { width:100%; border-collapse:collapse; }
+th { text-align:left; padding:10px 14px; font-size:12px; color:var(--text-muted); font-weight:600; border-bottom:1px solid var(--border); }
+td { padding:12px 14px; border-bottom:1px solid var(--border); font-size:13px; }
+tr:hover td { background:#f8fafc; }
+
+.company-cell { display:flex; align-items:center; gap:10px; }
+.company-avatar { width:34px; height:34px; border-radius:8px; color:#fff; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; flex-shrink:0; }
+.company-name { font-weight:600; }
+.company-role { font-size:12px; color:var(--text-muted); }
+
+/* Filters */
+.filters { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+.filters input, .filters select {
+  padding:8px 12px; border:1px solid var(--border); border-radius:8px;
+  font-size:13px; font-family:inherit; outline:none;
+}
+.filters input:focus, .filters select:focus { border-color:var(--primary); }
+.filters input { flex:1; min-width:200px; }
+
+/* Badges */
+.badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+.s-pending { background:#f1f5f9; color:#64748b; }
+.s-applied { background:#dbeafe; color:#2563eb; }
+.s-screening { background:#ccfbf1; color:#0d9488; }
+.s-screening-pass { background:#dcfce7; color:#16a34a; }
+.s-resume-rejected { background:#fce7f3; color:#db2777; }
+
+.s-exam { background:#ede9fe; color:#7c3aed; }
+.s-ai-interview { background:#dbeafe; color:#2563eb; }
+.s-round1 { background:#ffedd5; color:#ea580c; }
+.s-round2 { background:#fef3c7; color:#d97706; }
+.s-final-round { background:#fee2e2; color:#dc2626; }
+.s-negotiate { background:#fce7f3; color:#db2777; }
+.s-offer { background:#dcfce7; color:#16a34a; }
+.s-offer-declined { background:#f1f5f9; color:#64748b; }
+.s-interview { background:#fef3c7; color:#d97706; }
+.s-rejected { background:#fee2e2; color:#dc2626; }
+
+/* Buttons */
+.btn {
+  padding:8px 18px; border-radius:8px; border:none; font-size:13px; cursor:pointer;
+  font-weight:500; font-family:inherit; transition:all 0.15s;
+}
+.btn-primary { background:linear-gradient(135deg,#2563eb,#3b82f6); color:#fff; box-shadow: 0 4px 12px rgba(37,99,235,0.18); }
+.btn-primary:hover { background:linear-gradient(135deg,#1d4ed8,#2563eb); box-shadow: 0 6px 16px rgba(37,99,235,0.25); }
+.btn-ghost { background:transparent; color:var(--text-muted); }
+.btn-ghost:hover { background:#f1f5f9; }
+.btn-sm { padding:5px 12px; font-size:12px; }
+.icon-btn { background:none; border:none; cursor:pointer; font-size:16px; padding:4px 6px; border-radius:6px; color:var(--text-muted); }
+.icon-btn:hover { background:#f1f5f9; }
+.icon-btn.del { color:var(--danger); }
+.icon-btn.del:hover { background:#fef2f2; }
+.actions { display:flex; gap:4px; }
+
+/* Modal */
+.modal-overlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(15,23,42,0.45); z-index:200; align-items:center; justify-content:center; }
+.modal-overlay.show { display:flex; }
+.modal {
+  background:#fff; border-radius:16px; width:90%; max-width:640px; max-height:85vh; overflow-y:auto;
+  box-shadow:0 20px 60px rgba(15,23,42,0.18);
+}
+.modal-head { padding:18px 22px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+.modal-title { font-weight:600; font-size:16px; }
+.modal-close { background:none; border:none; font-size:22px; cursor:pointer; color:var(--text-muted); padding:0 4px; }
+.modal-body { padding:20px 22px; }
+.modal-foot { padding:14px 22px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:10px; }
+.form-group { margin-bottom:14px; }
+.form-group label { display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:5px; }
+.form-group input, .form-group select, .form-group textarea {
+  width:100%; padding:9px 12px; border:1px solid var(--border); border-radius:8px;
+  font-size:13px; font-family:inherit; outline:none;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color:var(--primary); }
+.form-group textarea { resize:vertical; min-height:60px; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.form-group.full { grid-column:1/-1; }
+
+/* Interview log */
+.interview-entry {
+  background:#f8fafc; border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:10px;
+}
+.interview-entry-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; font-size:13px; }
+.interview-add-btn { margin-top:8px; color:var(--primary); font-weight:600; }
+
+/* Funnel */
+.funnel-item { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+.funnel-label { width:60px; font-size:13px; color:var(--text-muted); text-align:right; flex-shrink:0; }
+.funnel-rate { width:36px; font-size:12px; color:var(--text-muted); text-align:left; flex-shrink:0; }
+.funnel-bar-wrap { flex:1; background:#e2e8f0; border-radius:6px; height:28px; overflow:hidden; }
+.funnel-bar { height:100%; border-radius:6px; color:#fff; font-size:12px; font-weight:600; display:flex; align-items:center; justify-content:center; min-width:40px; transition:width 0.4s; }
+
+/* Upcoming */
+.upcoming-list { display:flex; flex-direction:column; gap:10px; }
+.upcoming-item { display:flex; align-items:center; gap:14px; padding:12px 14px; background:#fff; border-radius:10px; border-left:4px solid var(--warning); box-shadow:0 2px 8px rgba(30,41,59,0.04); }
+.upcoming-date { text-align:center; min-width:48px; }
+.upcoming-date .day { font-size:20px; font-weight:700; color:var(--text); }
+.upcoming-date .mon { font-size:11px; color:var(--text-muted); }
+.upcoming-info { flex:1; }
+.upcoming-info .company { font-weight:600; font-size:14px; }
+.upcoming-info .role { font-size:12px; color:var(--text-muted); }
+.upcoming-time { font-size:12px; color:var(--warning); font-weight:600; }
+
+/* Timeline */
+.timeline-item { display:flex; gap:16px; padding-bottom:24px; position:relative; }
+.timeline-item::before { content:''; position:absolute; left:6px; top:22px; bottom:-6px; width:2px; background:var(--border); }
+.timeline-item:last-child::before { display:none; }
+.timeline-dot { width:14px; height:14px; border-radius:50%; background:var(--primary); margin-top:4px; flex-shrink:0; position:relative; z-index:1; }
+.timeline-item.rejected .timeline-dot { background:var(--danger); }
+.timeline-item.offer .timeline-dot { background:var(--success); }
+.timeline-date { font-size:12px; color:var(--text-muted); min-width:90px; padding-top:2px; }
+.timeline-content { flex:1; }
+.timeline-month { font-size:13px; font-weight:700; color:var(--primary); margin-top:12px; margin-bottom:2px; padding:4px 0; }
+.tc-company { font-weight:600; margin-bottom:2px; }
+.tc-role { font-size:13px; color:var(--text-muted); }
+.tc-note { font-size:12px; color:var(--text-light); margin-top:4px; white-space:pre-wrap; }
+
+/* Stats page */
+.stats-charts { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+
+/* Bar chart (pure CSS) */
+.bar-chart { display:flex; flex-direction:column; gap:8px; }
+.bar-row { display:flex; align-items:center; gap:10px; }
+.bar-label { font-size:12px; color:var(--text-muted); min-width:70px; text-align:right; }
+.bar-track { flex:1; height:22px; background:#e2e8f0; border-radius:6px; overflow:hidden; }
+.bar-fill { height:100%; border-radius:6px; color:#fff; font-size:11px; font-weight:600; display:flex; align-items:center; padding-left:8px; transition:width 0.4s; }
+.bar-count { font-size:12px; color:var(--text-muted); min-width:30px; }
+
+/* Pie chart (pure CSS conic-gradient) */
+.pie-wrap { display:flex; align-items:center; gap:20px; }
+.pie-chart { width:160px; height:160px; border-radius:50%; flex-shrink:0; }
+.pie-legend { display:flex; flex-direction:column; gap:6px; }
+.pie-legend-item { display:flex; align-items:center; gap:8px; font-size:12px; }
+.pie-legend-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+
+/* Toast */
+.toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:#1e293b; color:#fff; padding:10px 24px; border-radius:10px; font-size:13px; z-index:300; opacity:0; transition:opacity 0.3s; pointer-events:none; }
+.toast.show { opacity:1; }
+
+/* Empty state */
+.empty-state { text-align:center; padding:40px 20px; color:var(--text-light); }
+.empty-state .emoji { font-size:36px; margin-bottom:8px; }
+
+/* Interview Group & Timeline */
+.interview-group {
+  background: var(--card); border-radius: var(--radius); padding: 20px 24px; margin-bottom: 20px;
+  border: 1px solid var(--border);
+}
+.interview-group-header {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding-bottom: 16px; border-bottom: 1px solid var(--border); margin-bottom: 16px;
+}
+.ig-company { font-size: 17px; font-weight: 700; color: var(--text); }
+.ig-position { font-size: 13px; color: var(--text-muted); }
+.ig-round-count {
+  font-size: 12px; color: var(--primary); background: var(--primary-light);
+  padding: 3px 10px; border-radius: 10px; font-weight: 500;
+}
+.round-timeline { position: relative; padding-left: 32px; }
+.round-node { position: relative; padding-bottom: 20px; }
+.round-node:last-child { padding-bottom: 0; }
+.round-line {
+  position: absolute; left: -24px; top: 16px; width: 2px; background: var(--border);
+  bottom: -20px;
+}
+.rl-first { top: 16px; }
+.rl-last { bottom: auto; height: 16px; }
+.round-dot {
+  position: absolute; left: -30px; top: 8px; width: 14px; height: 14px;
+  border-radius: 50%; background: #cbd5e1; border: 2px solid var(--card);
+  box-shadow: 0 0 0 2px #cbd5e1;
+}
+.rd-pass { background: var(--success); box-shadow: 0 0 0 2px #dcfce7; }
+.rd-fail { background: var(--danger); box-shadow: 0 0 0 2px #fee2e2; }
+.rd-pending { background: var(--warning); box-shadow: 0 0 0 2px #fef3c7; }
+.round-card {
+  background: #f8fafc; border: 1px solid var(--border); border-radius: 10px;
+  padding: 14px 16px;
+}
+.round-card-head {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px;
+}
+.round-badge {
+  font-size: 13px; font-weight: 600; color: var(--primary);
+  background: var(--primary-light); padding: 3px 10px; border-radius: 6px;
+}
+.round-date { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+.round-meta { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 10px; }
+.round-meta span {
+  font-size: 12px; color: var(--text-muted);
+  display: flex; align-items: center; gap: 4px;
+}
+.round-meta span::before { content: ''; display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: #94a3b8; }
+.round-section { margin-top: 10px; }
+.round-section-title {
+  font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 4px;
+}
+.round-section-content {
+  font-size: 12px; color: var(--text-muted); line-height: 1.7;
+  white-space: pre-wrap; word-break: break-word;
+}
+
+/* Interview Records cards */
+.ir-card {
+  padding: 20px 24px; border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+.ir-card:last-child { border-bottom: none; }
+.ir-card:hover { background: #f8fafc; }
+.ir-card-head {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap;
+}
+.ir-company {
+  font-size: 16px; font-weight: 700; color: var(--text);
+  display: flex; align-items: center; gap: 8px;
+}
+.ir-position { font-size: 13px; color: var(--text-muted); }
+.ir-round {
+  padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;
+  background: #ede9fe; color: #7c3aed;
+}
+.ir-date {
+  font-size: 13px; color: var(--text-muted); margin-left: auto; white-space: nowrap;
+}
+.ir-meta {
+  display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 10px;
+  font-size: 12px; color: var(--text-muted);
+}
+.ir-meta span {
+  display: flex; align-items: center; gap: 4px;
+}
+.ir-meta span::before {
+  content: ''; display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: #94a3b8;
+}
+.ir-detail {
+  font-size: 12px; color: var(--text-muted); line-height: 1.7;
+  white-space: pre-wrap; word-break: break-word;
+  background: #f8fafc; border-radius: 8px; padding: 10px 14px;
+}
+.ir-detail-title { font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.ir-empty { padding: 60px 20px; text-align: center; }
+
+@media(max-width:768px) {
+  .ir-card { padding: 16px; }
+  .ir-card-head { gap: 8px; }
+  .ir-date { margin-left: 0; }
+}
+
+/* Page visibility */
+.page { display: none; }
+.page.active { display: block; }
+
+/* Dashboard section toggles */
+.dashboard-toggles {
+  display: flex; gap: 8px; align-items: center; margin: 20px 0 16px;
+  flex-wrap: wrap; padding: 12px 16px; background: #fff;
+  border-radius: var(--radius); border: 1px solid var(--border);
+  box-shadow: 0 4px 14px rgba(30,41,59,0.04);
+}
+.dash-toggle-label { font-size: 13px; color: var(--text-muted); font-weight: 500; margin-right: 4px; }
+.dash-toggle {
+  padding: 5px 14px; border-radius: 20px; border: 1.5px solid var(--border);
+  background: transparent; color: var(--text-muted); font-size: 12px;
+  cursor: pointer; font-family: inherit; transition: all 0.2s; white-space: nowrap;
+}
+.dash-toggle:hover { border-color: var(--primary); color: var(--primary); }
+.dash-toggle.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+.dash-section { display: none; margin-bottom: 20px; }
+.dash-section.open { display: block; }
+
+/* Responsive */
+@media(max-width:768px) {
+  .app { padding: 0 12px 40px; }
+  .header { margin-bottom: 16px; border-radius: 0 0 14px 14px; padding: 10px 0; }
+  .header-inner { flex-wrap: nowrap; gap: 8px; padding: 0 14px; }
+  .logo { font-size: 15px; gap: 8px; }
+  .logo-icon { width: 28px; height: 28px; font-size: 13px; border-radius: 7px; }
+  .today { font-size: 11px; flex-shrink: 0; opacity: 0.85; white-space: nowrap; }
+  .header .login-link, .header .contact-link { padding: 4px 8px; font-size: 10px; flex-shrink: 0; }
+  .ct-text { display: none; }
+
+  /* Nav */
+  .nav { gap: 5px; margin-bottom: 12px; }
+  .nav-btn { flex: 1; min-width: calc(33% - 4px); text-align: center; padding: 7px 2px; font-size: 11px; border-radius: 8px; }
+  #exportBtn { margin-left: 0 !important; flex: 1; min-width: calc(33% - 4px); padding: 7px 2px; font-size: 11px; text-align: center; border-radius: 8px; }
+
+  /* Quick actions */
+  .quick-bar { gap: 10px; margin-bottom: 16px; }
+  .quick-card { padding: 14px; }
+  .quick-icon { font-size: 24px; }
+  .quick-title { font-size: 14px; }
+  .quick-sub { font-size: 11px; }
+
+  /* Stats */
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+  .stat-card { padding: 14px; }
+  .stat-card .icon { font-size: 20px; margin-bottom: 6px; }
+  .stat-card .value { font-size: 22px; }
+  .stat-card .sub { font-size: 10px; }
+
+  /* Dashboard layout: stack cards */
+  .dash-two-col { grid-template-columns: 1fr !important; gap: 14px !important; }
+
+  /* Dashboard toggles */
+  .dashboard-toggles { padding: 10px 12px; gap: 6px; }
+  .dash-toggle-label { width: 100%; margin-bottom: 2px; }
+  .dash-toggle { padding: 4px 10px; font-size: 11px; }
+
+  /* Cards */
+  .card-head { padding: 14px 16px; }
+  .card-body { padding: 16px; }
+
+  /* Table -> Cards */
+  table, thead, tbody, th, td, tr { display: block; }
+  thead tr { position: absolute; top: -9999px; left: -9999px; }
+  tr {
+    margin-bottom: 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--card);
+    padding: 12px 14px;
+  }
+  tr:hover td { background: transparent; }
+  td {
+    border: none;
+    padding: 7px 0;
+    font-size: 13px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+  td:before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+  /* Empty state row */
+  tr:only-child td:only-child { display: block; text-align: center; }
+  tr:only-child td:only-child:before { display: none; }
+
+  /* Records page table labels */
+  #recordsBody td:nth-of-type(1):before, #dash-records td:nth-of-type(1):before { content: "公司"; }
+  #recordsBody td:nth-of-type(2):before, #dash-records td:nth-of-type(2):before { content: "城市"; }
+  #recordsBody td:nth-of-type(3):before, #dash-records td:nth-of-type(3):before { content: "渠道"; }
+  #recordsBody td:nth-of-type(4):before, #dash-records td:nth-of-type(4):before { content: "日期"; }
+  #recordsBody td:nth-of-type(5):before, #dash-records td:nth-of-type(5):before { content: "初步状态"; }
+  #recordsBody td:nth-of-type(6):before, #dash-records td:nth-of-type(6):before { content: "具体进展"; }
+  #recordsBody td:nth-of-type(7):before { content: "薪资"; }
+  #recordsBody td:nth-of-type(8):before { content: "面试"; }
+  #recordsBody td:nth-of-type(9):before, #dash-records td:nth-of-type(7):before { content: "操作"; }
+
+  /* Company cell in card layout */
+  td .company-cell { justify-content: flex-end; text-align: right; }
+  td .company-cell > div { text-align: right; }
+  td .company-avatar { width: 30px; height: 30px; font-size: 12px; flex-shrink: 0; }
+  td .company-name { font-size: 14px; }
+  td .company-role { font-size: 11px; }
+
+  /* Action buttons */
+  td .actions { justify-content: flex-end; width: 100%; }
+
+  /* Filters */
+  .filters { gap: 8px; }
+  .filters input { min-width: 100%; }
+  .filters select { flex: 1; min-width: calc(50% - 4px); }
+
+  /* Upcoming / Interview list */
+  .upcoming-item { flex-direction: column; align-items: flex-start; gap: 8px; padding: 12px; }
+  .upcoming-date { display: flex; align-items: baseline; gap: 6px; min-width: auto; }
+  .upcoming-date .day { font-size: 16px; }
+  .upcoming-date .mon { font-size: 11px; }
+  .upcoming-info { width: 100%; }
+  .upcoming-info .company { font-size: 14px; }
+  .upcoming-time { font-size: 11px; }
+
+  /* Funnel */
+  .funnel-label { width: 70px; font-size: 11px; }
+  .funnel-rate { width: 30px; font-size: 10px; }
+  .funnel-bar-wrap { height: 22px; }
+  .funnel-bar { font-size: 10px; }
+
+  /* Timeline */
+  .timeline-wrap { padding-left: 4px; }
+  .timeline-item { flex-direction: column; gap: 2px; padding-bottom: 16px; padding-left: 22px; position: relative; }
+  .timeline-item::before { left: 5px; }
+  .timeline-dot { position: absolute; left: 0; top: 2px; width: 12px; height: 12px; margin-top: 0; }
+  .timeline-date { min-width: auto; width: 100%; padding-top: 0; margin-bottom: 2px; }
+  .timeline-content { width: 100%; }
+
+  /* Interview groups */
+  .interview-group { padding: 16px; }
+  .interview-group-header { gap: 8px; padding-bottom: 12px; margin-bottom: 12px; }
+  .ig-company { font-size: 15px; }
+  .round-timeline { padding-left: 24px; }
+  .round-line { left: -18px; }
+  .round-dot { left: -24px; top: 6px; width: 12px; height: 12px; }
+  .round-card { padding: 12px; }
+  .round-card-head { gap: 6px; }
+  .round-badge { font-size: 12px; }
+  .round-date { font-size: 12px; }
+
+  /* Stats charts */
+  .stats-charts { grid-template-columns: 1fr; gap: 14px; }
+  .pie-wrap { flex-direction: column; gap: 14px; }
+  .pie-chart { width: 140px; height: 140px; }
+  .bar-label { min-width: 64px; }
+
+  /* Modal */
+  .modal { width: 94%; border-radius: 14px; }
+  .modal-head { padding: 14px 16px; }
+  .modal-body { padding: 16px; }
+  .modal-foot { padding: 12px 16px; }
+  .form-row { grid-template-columns: 1fr; gap: 0; }
+  .form-group { margin-bottom: 12px; }
+
+  .round-meta { flex-direction: column; gap: 4px; }
+}
+
+/* Login overlay */
+.login-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(15,23,42,0.45); z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+}
+.login-box {
+  background: #fff; border-radius: 16px; padding: 32px 28px 24px;
+  width: 340px; max-width: 90vw; box-shadow: 0 20px 60px rgba(15,23,42,0.18);
+  text-align: center;
+}
+.login-box h3 { margin: 0 0 6px; font-size: 18px; color: var(--text); }
+.login-box .login-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+.login-box input {
+  width: 100%; padding: 10px 14px; border: 1.5px solid var(--border);
+  border-radius: 10px; font-size: 14px; font-family: inherit; margin-bottom: 10px;
+  box-sizing: border-box; outline: none; transition: border-color 0.2s;
+  background: #f8fafc; color: var(--text);
+}
+.login-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+.login-box .login-btn {
+  width: 100%; padding: 12px; border-radius: 10px; border: none;
+  background: var(--primary); color: #fff; font-size: 15px; font-weight: 600;
+  font-family: inherit; cursor: pointer; margin-top: 4px; transition: background 0.2s;
+}
+.login-box .login-btn:hover { background: linear-gradient(135deg,#1d4ed8,#2563eb); }
+.login-box .login-err { color: var(--danger); font-size: 12px; margin-top: 8px; min-height: 18px; }
+.login-box .login-close {
+  position: absolute; top: 12px; right: 16px;
+  background: none; border: none; font-size: 20px; color: var(--text-muted);
+  cursor: pointer; padding: 4px; line-height: 1;
+}
+.login-box { position: relative; }
+
+/* Login indicator in header */
+.login-link {
+  font-size: 12px; color: var(--primary); cursor: pointer;
+  padding: 4px 12px; border-radius: 20px; border: 1px solid var(--primary);
+  background: transparent; font-family: inherit; font-weight: 500;
+  margin-left: 4px; transition: all 0.2s; white-space: nowrap;
+}
+.login-link:hover { background: var(--primary); color: #fff; }
+.login-link.logged { color: var(--success); border-color: var(--success); background: #f0fdf4; }
+.login-link.logged:hover { background: var(--success); color: #fff; }
+
+.contact-link {
+  font-size: 12px; color: var(--primary); cursor: pointer;
+  padding: 4px 12px; border-radius: 20px; border: 1px solid var(--primary);
+  background: transparent; font-family: inherit; font-weight: 500;
+  margin-left: 4px; transition: all 0.2s; white-space: nowrap;
+}
+.contact-link:hover { background: var(--primary); color: #fff; }
+
+/* Contact overlay */
+.contact-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(15,23,42,0.45); z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+}
+.contact-box {
+  position: relative;
+  background: #fff; border-radius: 16px; padding: 32px 28px 24px;
+  width: 400px; max-width: 90vw; box-shadow: 0 20px 60px rgba(15,23,42,0.18);
+  text-align: center;
+}
+.contact-box h3 { margin: 0 0 4px; font-size: 18px; color: var(--text); }
+.contact-box .contact-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 18px; }
+.contact-box input, .contact-box textarea {
+  width: 100%; padding: 10px 14px; border: 1.5px solid var(--border);
+  border-radius: 10px; font-size: 14px; font-family: inherit; margin-bottom: 10px;
+  box-sizing: border-box; outline: none; transition: border-color 0.2s;
+  background: #f8fafc; color: var(--text);
+}
+.contact-box input:focus, .contact-box textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+.contact-box textarea { resize: vertical; min-height: 90px; }
+.contact-box .contact-btn {
+  width: 100%; padding: 12px; border-radius: 10px; border: none;
+  background: var(--primary); color: #fff; font-size: 15px; font-weight: 600;
+  font-family: inherit; cursor: pointer; margin-top: 4px; transition: background 0.2s;
+}
+.contact-box .contact-btn:hover { background: linear-gradient(135deg,#1d4ed8,#2563eb); }
+.contact-box .contact-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.contact-box .contact-err { color: var(--danger); font-size: 12px; margin-top: 6px; min-height: 18px; }
+.contact-box .contact-ok { color: var(--success); font-size: 13px; margin-top: 6px; min-height: 18px; font-weight: 500; }
+.contact-box .contact-close {
+  position: absolute; top: 12px; right: 16px;
+  background: none; border: none; font-size: 20px; color: var(--text-muted);
+  cursor: pointer; padding: 4px; line-height: 1;
+}
+
+/* Blur lock state for locked elements */
+.locked { opacity: 0.45; pointer-events: none; user-select: none; transition: opacity 0.3s; }
+
+/* Admin panel overlay */
+.admin-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(15,23,42,0.45); z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+}
+.admin-box {
+  position: relative;
+  background: #fff; border-radius: 16px; padding: 28px;
+  width: 520px; max-width: 92vw; max-height: 80vh; overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(15,23,42,0.18);
+}
+.admin-box h3 { margin: 0 0 6px; font-size: 18px; color: var(--text); }
+.admin-box .admin-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 18px; }
+.admin-box .admin-close {
+  position: absolute; top: 12px; right: 16px;
+  background: none; border: none; font-size: 20px; color: var(--text-muted);
+  cursor: pointer; padding: 4px; line-height: 1;
+}
+.admin-section { margin-bottom: 20px; }
+.admin-section h4 { font-size: 14px; color: var(--text); margin: 0 0 10px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+.admin-create-row { display: flex; gap: 8px; margin-bottom: 8px; }
+.admin-create-row input {
+  flex: 1; padding: 8px 12px; border: 1.5px solid var(--border);
+  border-radius: 8px; font-size: 13px; font-family: inherit; outline: none;
+  background: #f8fafc; color: var(--text); min-width: 0;
+}
+.admin-create-row input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+.admin-create-row button {
+  padding: 8px 16px; border-radius: 8px; border: none;
+  background: var(--primary); color: #fff; font-size: 13px; font-weight: 600;
+  font-family: inherit; cursor: pointer; white-space: nowrap; transition: background 0.2s;
+}
+.admin-create-row button:hover { background: linear-gradient(135deg,#1d4ed8,#2563eb); }
+.admin-create-row button.danger {
+  background: #fee2e2; color: #dc2626; border: 1px solid #fecaca;
+}
+.admin-create-row button.danger:hover { background: #dc2626; color: #fff; }
+.admin-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.admin-table th, .admin-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+.admin-table th { color: var(--text-muted); font-weight: 600; font-size: 12px; }
+.admin-table .admin-role { 
+  display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600;
+}
+.admin-role.role-admin { background: #fef3c7; color: #b45309; }
+.admin-role.role-user { background: #dbeafe; color: #1d4ed8; }
+.admin-msg { font-size: 12px; min-height: 18px; margin-top: 8px; }
+.admin-msg.success { color: var(--success); }
+.admin-msg.error { color: var(--danger); }
+.admin-pwd-cell { display: flex; align-items: center; gap: 4px; }
+.admin-pwd-cell .pwd-text { font-family: monospace; font-size: 11px; color: var(--text-muted); max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-pwd-cell .pwd-dots { font-size: 13px; letter-spacing: 2px; color: var(--text-muted); }
+.admin-pwd-cell button { background: none; border: none; cursor: pointer; padding: 2px 4px; font-size: 13px; color: var(--text-muted); border-radius: 4px; }
+.admin-pwd-cell button:hover { background: #f1f5f9; color: var(--text); }
+.admin-role-select { font-size: 12px; padding: 3px 6px; border: 1px solid var(--border); border-radius: 6px; background: #fff; color: var(--text); cursor: pointer; }
+.admin-action-btn { font-size: 11px; padding: 3px 8px; border-radius: 6px; border: none; cursor: pointer; font-family: inherit; margin-right: 4px; transition: all 0.15s; }
+.admin-action-btn.reset { background: #e0f2fe; color: #0369a1; }
+.admin-action-btn.reset:hover { background: #0369a1; color: #fff; }
+.admin-action-btn.delete { background: #fee2e2; color: #dc2626; }
+.admin-action-btn.delete:hover { background: #dc2626; color: #fff; }
+.admin-reset-modal { margin-top: 12px; padding: 12px; background: #f8fafc; border-radius: 8px; border: 1px solid var(--border); }
+.admin-reset-modal p { font-size: 12px; color: var(--text-muted); margin: 0 0 8px; }
+.admin-reset-row { display: flex; gap: 6px; }
+.admin-reset-row input { flex: 1; padding: 6px 10px; border: 1.5px solid var(--border); border-radius: 6px; font-size: 12px; font-family: inherit; outline: none; }
+.admin-reset-row input:focus { border-color: var(--primary); }
+.admin-reset-row button { padding: 6px 12px; border-radius: 6px; border: none; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.admin-reset-row button.confirm { background: var(--primary); color: #fff; }
+.admin-reset-row button.confirm:hover { background: #1d4ed8; }
+.admin-reset-row button.cancel { background: #f1f5f9; color: var(--text-muted); }
+.admin-reset-row button.cancel:hover { background: #e2e8f0; }
+.admin-create-row select { padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; background: #f8fafc; color: var(--text); cursor: pointer; }
+.admin-create-row select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+
+.unlocked { opacity: 1; pointer-events: auto; user-select: auto; }
+#exportBtn.locked { display: none !important; }
+
+@media(max-width:768px) {
+  .login-box { padding: 24px 20px 20px; }
+  .contact-box { padding: 24px 20px 20px; }
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+</head>
+<body>
+
+<div class="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <div class="logo-icon">J</div>
+        <span>求职记录</span>
+      </div>
+      <div class="today" id="todayDate"></div>
+      <span id="syncBadge" style="display:none;font-size:11px;padding:3px 10px;border-radius:20px;margin-left:8px;font-weight:500">离线</span>
+      <button class="contact-link" id="contactBtn" title="联系我">✉ <span class="ct-text">联系我</span></button>
+      <button class="login-link" id="loginBtn" title="登录以编辑数据">登录</button>
+      <button class="login-link" id="adminBtn" title="账号管理" style="display:none">⚙</button>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <div class="nav">
+    <button class="nav-btn active" data-page="dashboard">概览</button>
+    <button class="nav-btn" data-page="records">求职记录</button>
+    <button class="nav-btn" data-page="interviews">面试日程</button>
+    <button class="nav-btn" data-page="interview_records">面试记录</button>
+    <button class="nav-btn" data-page="stats">数据分析</button>
+    <button class="nav-btn" data-page="timeline">时间线</button>
+    <button class="btn btn-ghost btn-sm act-lock" id="exportBtn" style="margin-left:auto">导出数据</button>
+  </div>
+
+  <!-- Pages -->
+  <div class="page active" id="page-dashboard">
+    <!-- Quick actions -->
+    <div class="quick-bar">
+      <div class="quick-card primary act-lock" id="quickAdd">
+        <div class="quick-icon">＋</div>
+        <div><div class="quick-title">新增投递</div><div class="quick-sub">记录企业名称、职位等信息</div></div>
+      </div>
+      <div class="quick-card act-lock" id="quickInterview">
+        <div class="quick-icon">🎤</div>
+        <div><div class="quick-title">记录面试</div><div class="quick-sub">快速记录面试日期和内容</div></div>
+      </div>
+    </div>
+    <!-- Stats -->
+    <div class="stats-grid" id="statsGrid"></div>
+    <!-- Funnel + Upcoming -->
+    <div class="dash-two-col" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+      <div class="card">
+        <div class="card-head"><div class="card-title">投递漏斗</div></div>
+        <div class="card-body" id="funnel"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">即将面试</div></div>
+        <div class="card-body" id="upcomingList"></div>
+      </div>
+    </div>
+    <!-- Dashboard Section Toggles -->
+    <div class="dashboard-toggles" id="dashToggles">
+      <span class="dash-toggle-label">概览内容：</span>
+      <button class="dash-toggle active" data-dash="records">求职记录</button>
+      <button class="dash-toggle active" data-dash="interviews">面试日程</button>
+      <button class="dash-toggle active" data-dash="interview_records">面试记录</button>
+      <button class="dash-toggle active" data-dash="stats">数据分析</button>
+      <button class="dash-toggle active" data-dash="timeline">时间线</button>
+      <button class="dash-toggle" data-dash="all" style="font-size:11px;color:var(--text-light)">全部显示</button>
+    </div>
+    <!-- Inline sections -->
+    <div class="dash-section open" id="dash-records"></div>
+    <div class="dash-section open" id="dash-interviews"></div>
+    <div class="dash-section open" id="dash-interview_records"></div>
+    <div class="dash-section open" id="dash-stats"></div>
+    <div class="dash-section open" id="dash-timeline"></div>
+  </div>
+
+  <!-- Records Page -->
+  <div class="page" id="page-records">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">全部投递记录</div>
+        <button class="btn btn-primary btn-sm act-lock" id="addBtn">＋ 新增投递</button>
+      </div>
+      <div class="card-body">
+        <div class="filters">
+          <input type="text" id="searchInput" placeholder="搜索公司或职位...">
+          <select id="filterPrelimStatus"><option value="">全部初步状态</option></select>
+          <select id="filterProgressStatus"><option value="">全部具体进展</option></select>
+          <select id="filterChannel"><option value="">全部渠道</option></select>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>公司</th><th>城市</th><th>渠道</th><th>投递日期</th>
+                <th>初步状态</th><th>具体进展</th><th>薪资范围</th><th>面试</th><th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="recordsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interviews Page -->
+  <div class="page" id="page-interviews">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">面试日程</div>
+        <button class="btn btn-primary btn-sm act-lock" id="addInterviewPageBtn">🎤 记录面试</button>
+      </div>
+      <div class="card-body" id="interviewFullList"></div>
+    </div>
+  </div>
+
+  <!-- Interview Records Page -->
+  <div class="page" id="page-interview_records">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">面试记录</div>
+        <button class="btn btn-primary btn-sm act-lock" id="addInterviewRecordBtn">🎤 记录面试</button>
+      </div>
+      <div class="card-body" style="padding:0" id="interviewRecordsList"></div>
+    </div>
+  </div>
+
+  <!-- Stats Page -->
+  <div class="page" id="page-stats">
+    <div class="stats-charts">
+      <div class="card">
+        <div class="card-head"><div class="card-title">状态分布</div></div>
+        <div class="card-body" id="statusPie"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">投递渠道 Top 10</div></div>
+        <div class="card-body" id="channelBars"></div>
+      </div>
+    </div>
+    <div class="stats-charts" style="margin-top:20px">
+      <div class="card">
+        <div class="card-head"><div class="card-title">具体进展分布</div></div>
+        <div class="card-body" id="progressBars"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">最近8周投递趋势</div></div>
+        <div class="card-body" id="weeklyBars"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timeline Page -->
+  <div class="page" id="page-timeline">
+    <div class="card">
+      <div class="card-head"><div class="card-title">求职时间线</div></div>
+      <div class="card-body" id="timelineList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Main Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="modalTitle">新增投递记录</div>
+      <button class="modal-close" id="modalClose">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>公司名称 *</label>
+          <input type="text" id="fCompany" placeholder="如：字节跳动">
+        </div>
+        <div class="form-group">
+          <label>职位名称 *</label>
+          <input type="text" id="fPosition" placeholder="如：前端开发工程师">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>城市</label>
+          <input type="text" id="fCity" placeholder="如：深圳">
+        </div>
+        <div class="form-group">
+          <label>投递渠道</label>
+          <select id="fChannel"></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>投递日期 *</label>
+          <input type="date" id="fDate">
+        </div>
+        <div class="form-group">
+          <label>薪资范围</label>
+          <input type="text" id="fSalary" placeholder="如：25-35K·15薪">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>初步状态</label>
+          <select id="fPrelimStatus"></select>
+        </div>
+        <div class="form-group">
+          <label>具体进展</label>
+          <select id="fProgressStatus"></select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>HR 联系方式</label>
+        <input type="text" id="fContact" placeholder="如：微信 / 电话">
+      </div>
+      <div class="form-group">
+        <label>JD 链接</label>
+        <input type="text" id="fLink" placeholder="职位链接（可选）">
+      </div>
+      <div class="form-group">
+        <label>备注</label>
+        <textarea id="fNote" rows="2" placeholder="其他备注信息..."></textarea>
+      </div>
+      <div class="form-group full">
+        <label>面试记录</label>
+        <div id="interviewLog"></div>
+        <button class="btn btn-ghost btn-sm interview-add-btn" id="addInterviewBtn">+ 添加面试记录</button>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="cancelBtn">取消</button>
+      <button class="btn btn-primary" id="saveBtn">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Interview Modal -->
+<div class="modal-overlay" id="quickModal">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-head">
+      <div class="modal-title">记录面试</div>
+      <button class="modal-close" id="quickModalClose">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>选择公司 *</label>
+        <select id="qCompany" style="width:100%"></select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>面试日期 *</label>
+          <input type="date" id="qDate">
+        </div>
+        <div class="form-group">
+          <label>面试轮次</label>
+          <select id="qRound">
+            <option>一面</option><option>二面</option><option>三面</option><option>四面</option>
+            <option>HR面</option><option>终面</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>面试方式</label>
+          <select id="qMethod">
+            <option value="">请选择</option>
+            <option>线下面试</option><option>视频面试</option><option>电话面试</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>面试时长（分钟）</label>
+          <input type="number" id="qDuration" placeholder="如：45" min="1" max="300">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>面试官</label>
+          <input type="text" id="qInterviewer" placeholder="如：张经理 / 王工">
+        </div>
+        <div class="form-group">
+          <label>面试结果</label>
+          <select id="qResult">
+            <option value="">暂无结果</option>
+            <option>通过</option><option>待定</option><option>未通过</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>技术考察点 / 面试问题</label>
+        <textarea id="qTechPoints" rows="2" placeholder="面试中问了哪些技术问题？考察了哪些知识点？"></textarea>
+      </div>
+      <div class="form-group">
+        <label>面试总结</label>
+        <textarea id="qSummary" rows="3" placeholder="整体感受、回答情况、需要改进的地方..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>自我评价</label>
+        <textarea id="qSelfEval" rows="2" placeholder="给自己这次面试打几分？哪里表现好？哪里没做好？"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="quickCancelBtn">取消</button>
+      <button class="btn btn-primary" id="quickSaveBtn">保存面试记录</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+console.log('求职记录 JS 开始加载...');
+
+var STORAGE_KEY = 'job_tracker_data_v2';
+var SUPA_URL = 'https://aogcjeofzbaybleqxtoe.supabase.co/rest/v1/job_data';
+var SUPA_KEY = 'sb_publishable_q4Mi2PvK-dGJD3_KBKFn8g_5bBquN8q';
+var SYNC_MODE = false;
+var saveTimer = null;
+
+var PRELIM_STATUS_LIST = [
+  { key:'pending', label:'待投递', cls:'s-pending' },
+  { key:'applied', label:'已投递', cls:'s-applied' },
+  { key:'screening', label:'初筛中', cls:'s-screening' },
+  { key:'resume_rejected', label:'初筛被拒', cls:'s-resume-rejected' },
+  { key:'screening_pass', label:'初筛通过', cls:'s-screening-pass' }
+];
+
+var PROGRESS_STATUS_LIST = [
+  { key:'', label:'— 暂无 —', cls:'' },
+  { key:'exam', label:'笔试', cls:'s-exam' },
+  { key:'ai_interview', label:'AI面试', cls:'s-ai-interview' },
+  { key:'round1', label:'一轮面试', cls:'s-round1' },
+  { key:'round2', label:'二轮面试', cls:'s-round2' },
+  { key:'final_round', label:'终面', cls:'s-final-round' },
+  { key:'negotiate', label:'谈薪中', cls:'s-negotiate' },
+  { key:'offer_accepted', label:'已接受offer', cls:'s-offer' },
+  { key:'offer_declined', label:'已拒绝offer', cls:'s-offer-declined' }
+];
+
+var CHANNELS = ['BOSS直聘','国聘','智联','前程无忧','官网','其他'];
+
+var PRELIM_COLORS = {
+  pending:'#94a3b8', applied:'#2563eb', screening:'#0d9488', resume_rejected:'#db2777', screening_pass:'#16a34a'
+};
+
+var PROGRESS_COLORS = {
+  exam:'#7c3aed', ai_interview:'#2563eb', round1:'#ea580c', round2:'#d97706',
+  final_round:'#dc2626', negotiate:'#db2777', offer_accepted:'#16a34a', offer_declined:'#94a3b8'
+};
+
+var BAR_COLORS = ['#2563eb','#7c3aed','#0d9488','#16a34a','#d97706','#dc2626','#db2777','#3b82f6','#22c55e','#ea580c'];
+
+// ==================== Auth ====================
+var SUPA_ACCOUNTS = 'https://aogcjeofzbaybleqxtoe.supabase.co/rest/v1/accounts';
+var currentUser = null; // { username, role } or null
+var isLoggedIn = false; // backward compat alias
+
+// SHA-256 via Web Crypto
+async function sha256(str) {
+  var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(function(b) { return b.toString(16).padStart(2,'0'); }).join('');
+}
+
+function checkLogin() {
+  if (currentUser) return true;
+  showLogin();
+  return false;
+}
+
+function showLogin(mode) {
+  var overlay = document.getElementById('loginOverlay');
+  overlay.style.display = 'flex';
+  document.getElementById('loginUser').focus();
+  document.getElementById('loginErr').textContent = '';
+  document.getElementById('loginOk').textContent = '';
+  // Reset form
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+}
+
+function closeLogin() {
+  document.getElementById('loginOverlay').style.display = 'none';
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+  document.getElementById('loginErr').textContent = '';
+  document.getElementById('loginOk').textContent = '';
+}
+
+async function doLogin() {
+  var u = document.getElementById('loginUser').value.trim();
+  var p = document.getElementById('loginPass').value;
+  var errEl = document.getElementById('loginErr');
+  var okEl = document.getElementById('loginOk');
+  errEl.textContent = '';
+  okEl.textContent = '';
+
+  if (!u || !p) {
+    errEl.textContent = '请输入账号和密码';
+    return;
+  }
+
+  var hash = await sha256(p);
+
+  try {
+    var res = await fetch(SUPA_ACCOUNTS + '?username=eq.' + encodeURIComponent(u) + '&select=password,role', {
+      headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
+    });
+    if (!res.ok) throw new Error('Server error');
+    var rows = await res.json();
+
+    if (rows.length === 0) {
+      errEl.textContent = '账号不存在';
+      return;
+    }
+
+    if (rows[0].password !== hash) {
+      errEl.textContent = '密码错误';
+      return;
+    }
+
+    // Login success
+    currentUser = { username: u, role: rows[0].role };
+    isLoggedIn = true;
+    sessionStorage.setItem('job_tracker_user', JSON.stringify(currentUser));
+    closeLogin();
+    updateLoginUI();
+    toast('欢迎回来，' + u + '！');
+    
+    // Load user's data from cloud
+    loadUserData(u, function() {
+      renderAll();
+      console.log('已加载用户 ' + u + ' 的数据 (' + DATA.records.length + ' 条)');
+    });
+  } catch(e) {
+    errEl.textContent = '网络异常，请稍后重试';
+    console.error('Login error:', e);
+  }
+}
+
+function doLogout() {
+  if (confirm('确定退出登录？退出后将无法编辑数据。')) {
+    currentUser = null;
+    isLoggedIn = false;
+    sessionStorage.removeItem('job_tracker_user');
+    updateLoginUI();
+    // Reload demo data
+    seedDemo();
+    saveDataLocal();
+    renderAll();
+    toast('已退出登录，当前为演示数据');
+  }
+}
+
+function updateLoginUI() {
+  var btn = document.getElementById('loginBtn');
+  var adminBtn = document.getElementById('adminBtn');
+  if (currentUser) {
+    btn.textContent = currentUser.username;
+    btn.className = 'login-link logged';
+    btn.title = '点击退出登录';
+    if (adminBtn) adminBtn.style.display = (currentUser.role === 'admin') ? 'inline-block' : 'none';
+  } else {
+    btn.textContent = '登录';
+    btn.className = 'login-link';
+    btn.title = '登录以编辑数据';
+    if (adminBtn) adminBtn.style.display = 'none';
+  }
+  // Toggle locked class on all action elements
+  var actionEls = document.querySelectorAll('.act-lock');
+  for (var i = 0; i < actionEls.length; i++) {
+    if (currentUser) {
+      actionEls[i].classList.remove('locked');
+      actionEls[i].classList.add('unlocked');
+    } else {
+      actionEls[i].classList.add('locked');
+      actionEls[i].classList.remove('unlocked');
+    }
+  }
+}
+
+// ==================== Data ====================
+var DATA = { records: [] };
+var editingId = null;
+var tempInterviews = [];
+
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+}
+
+// Load user data from Supabase by username
+function loadUserData(username, callback) {
+  fetch(SUPA_URL + '?user_id=eq.' + encodeURIComponent(username) + '&select=data', {
+    headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
+  })
+    .then(function(res) {
+      if (!res.ok) throw new Error('Supabase error');
+      return res.json();
+    })
+    .then(function(rows) {
+      SYNC_MODE = true;
+      updateSyncBadge(true);
+      if (rows.length > 0 && rows[0].data) {
+        DATA = rows[0].data;
+        if (!DATA.records) DATA.records = [];
+        if (!DATA.settings) DATA.settings = {};
+        if (!DATA.settings.dashSections) DATA.settings.dashSections = ['records','interviews','interview_records','stats','timeline'];
+        // Migrate old records
+        migrateRecords();
+        saveDataLocal();
+      } else {
+        // New user, create empty row
+        DATA = { records: [], settings: { dashSections: ['records','interviews','interview_records','stats','timeline'] } };
+        createUserDataRow(username);
+      }
+      if (callback) callback();
+    })
+    .catch(function(err) {
+      SYNC_MODE = false;
+      updateSyncBadge(false);
+      console.warn('云端不可达: ' + err.message);
+      // Try localStorage cache for this user
+      try {
+        var raw = localStorage.getItem(STORAGE_KEY + '_' + username);
+        if (raw) { DATA = JSON.parse(raw); migrateRecords(); }
+      } catch(e) {}
+      if (callback) callback();
+    });
+}
+
+function createUserDataRow(username) {
+  fetch(SUPA_URL, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPA_KEY,
+      'Authorization': 'Bearer ' + SUPA_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({
+      user_id: username,
+      data: { records: [], settings: { dashSections: ['records','interviews','interview_records','stats','timeline'] } },
+      updated_at: new Date().toISOString()
+    })
+  }).catch(function(e) { console.warn('Failed to create user data row: ' + e.message); });
+}
+
+function migrateRecords() {
+  for (var i=0; i<DATA.records.length; i++) {
+    var r = DATA.records[i];
+    if (r.status && !r.prelimStatus) {
+      var oldStatus = r.status;
+      if (oldStatus === 'pending') { r.prelimStatus = 'pending'; r.progressStatus = ''; }
+      else if (oldStatus === 'applied') { r.prelimStatus = 'applied'; r.progressStatus = ''; }
+      else if (oldStatus === 'viewed') { r.prelimStatus = 'screening'; r.progressStatus = ''; }
+      else if (oldStatus === 'resume_rejected') { r.prelimStatus = 'resume_rejected'; r.progressStatus = ''; }
+      else if (oldStatus === 'test') { r.prelimStatus = 'screening_pass'; r.progressStatus = 'exam'; }
+      else if (oldStatus === 'interview') { r.prelimStatus = 'screening_pass'; r.progressStatus = 'round1'; }
+      else if (oldStatus === 'negotiate') { r.prelimStatus = 'screening_pass'; r.progressStatus = 'negotiate'; }
+      else if (oldStatus === 'offer') { r.prelimStatus = 'screening_pass'; r.progressStatus = 'offer_accepted'; }
+      else if (oldStatus === 'rejected') { r.prelimStatus = 'screening_pass'; r.progressStatus = 'offer_declined'; }
+      else if (oldStatus === 'onboarded') { r.prelimStatus = 'screening_pass'; r.progressStatus = 'offer_accepted'; }
+      else { r.prelimStatus = 'applied'; r.progressStatus = ''; }
+      delete r.status;
+    }
+  }
+}
+
+function loadData(callback) {
+  // Check for saved login session
+  var savedUser = sessionStorage.getItem('job_tracker_user');
+  if (savedUser) {
+    try {
+      currentUser = JSON.parse(savedUser);
+      isLoggedIn = true;
+      updateLoginUI();
+      loadUserData(currentUser.username, function() {
+        updateLoginUI();
+        if (callback) callback();
+      });
+      return;
+    } catch(e) { currentUser = null; isLoggedIn = false; }
+  }
+
+  // No login - always show demo data, never load from localStorage
+  DATA = { records: [], settings: { dashSections: ['records','interviews','interview_records','stats','timeline'] } };
+  seedDemo();
+
+  // Try Supabase for demo data
+  initSync(function() {
+    if (callback) callback();
+  });
+}
+
+function initSync(onDone) {
+  fetch(SUPA_URL + '?user_id=eq.demo&select=data,updated_at', {
+    headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
+  })
+    .then(function(res) {
+      if (!res.ok) throw new Error('Supabase unreachable');
+      return res.json();
+    })
+    .then(function(rows) {
+      SYNC_MODE = true;
+      updateSyncBadge(true);
+      
+      var cloudHasData = rows && rows.length > 0 && rows[0].data && rows[0].data.records && rows[0].data.records.length > 0;
+      
+      if (cloudHasData && !currentUser) {
+        // Cloud has demo data, use it
+        var cloudData = rows[0].data;
+        if (!cloudData.settings) cloudData.settings = {};
+        if (!cloudData.settings.dashSections) cloudData.settings.dashSections = ['records','interviews','interview_records','stats','timeline'];
+        DATA = cloudData;
+        saveDataLocal();
+        console.log('已从云端加载演示数据 (' + cloudData.records.length + ' 条)');
+      } else if (!currentUser && !DATA.records.length) {
+        // No cloud demo, seed locally
+        seedDemo();
+        saveData();
+      }
+      if (onDone) onDone();
+    })
+    .catch(function() {
+      SYNC_MODE = false;
+      updateSyncBadge(false);
+      console.log('云端不可达，使用本地数据');
+      if (!currentUser && !DATA.records.length) seedDemo();
+      if (onDone) onDone();
+    });
+}
+
+function pushToSupabase() {
+  var uid = currentUser ? currentUser.username : 'demo';
+  return fetch(SUPA_URL + '?user_id=eq.' + encodeURIComponent(uid), {
+    method: 'PATCH',
+    headers: {
+      'apikey': SUPA_KEY,
+      'Authorization': 'Bearer ' + SUPA_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({ data: DATA, updated_at: new Date().toISOString() })
+  });
+}
+
+function syncToServer() {
+  if (!SYNC_MODE || !currentUser) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(function() {
+    pushToSupabase()
+      .then(function(res) {
+        if (res.ok) {
+          updateSyncBadge(true);
+          console.log('数据已同步到云端 (' + DATA.records.length + ' 条记录)');
+        } else {
+          // Row might not exist, try to create it
+          if (res.status === 404) {
+            createUserDataRow(currentUser.username);
+            console.log('用户数据行不存在，已创建');
+          } else {
+            updateSyncBadge(false);
+            console.warn('云端同步失败: ' + res.status);
+          }
+        }
+      })
+      .catch(function() {
+        updateSyncBadge(false);
+        console.warn('云端不可达，数据仅保存在本地');
+      });
+  }, 800);
+}
+
+function updateSyncBadge(ok) {
+  var badge = document.getElementById('syncBadge');
+  if (!badge) return;
+  if (ok) {
+    badge.textContent = '已同步';
+    badge.style.background = '#dcfce7';
+    badge.style.color = '#16a34a';
+  } else {
+    badge.textContent = '离线';
+    badge.style.background = '#fee2e2';
+    badge.style.color = '#dc2626';
+  }
+}
+
+function saveDataLocal() {
+  if (currentUser) {
+    try { localStorage.setItem(STORAGE_KEY + '_' + currentUser.username, JSON.stringify(DATA)); } catch(e) {}
+  }
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA)); } catch(e) {}
+}
+
+function saveData() {
+  saveDataLocal();
+  syncToServer();
+}
+
+function seedDemo() {
+  var today = new Date();
+  var fmt = function(d) { return d.toISOString().slice(0,10); };
+  var ago = function(n) { var d = new Date(today); d.setDate(d.getDate()-n); return fmt(d); };
+  DATA.records = [
+    { id:uid(), company:'字节跳动', position:'前端开发工程师', city:'深圳', channel:'BOSS直聘',
+      date:ago(5), prelimStatus:'screening_pass', progressStatus:'round2', salary:'25-35K·15薪', contact:'HR微信:bytedance_hr',
+      link:'', note:'React + TypeScript + 微前端，团队做飞书方向',
+      interviews:[
+        { date:ago(3), round:'一面', method:'视频面试', duration:'45', interviewer:'张工', result:'通过',
+          techPoints:'React Hooks原理、虚拟DOM diff算法、浏览器渲染流程、事件循环机制',
+          summary:'主要问了项目经历、React原理、Hook使用、浏览器渲染机制。手写了一个防抖函数和深拷贝。整体感受不错，面试官很专业。',
+          selfEval:'基础题答得不错，手写题写得比较顺利，但React Fiber那块说得不够深入。整体表现 7.5/10。' },
+        { date:ago(1), round:'二面', method:'视频面试', duration:'60', interviewer:'李经理', result:'待定',
+          techPoints:'微前端架构设计（qiankun）、性能优化（LCP/FID指标）、Webpack构建优化、前端监控体系',
+          summary:'聊了架构设计、微前端落地方案、性能优化手段。也聊了职业规划。面试官比较关注技术深度。',
+          selfEval:'架构设计方面回答得还可以，但性能优化的量化指标没答上来。面试官对项目管理经验也比较看重。等结果中。' }
+      ]},
+    { id:uid(), company:'腾讯', position:'高级Web前端工程师', city:'深圳', channel:'官网',
+      date:ago(8), prelimStatus:'applied', progressStatus:'', salary:'30-50K', contact:'', link:'', note:'T9级别，做小程序中台', interviews:[] },
+    { id:uid(), company:'阿里巴巴', position:'前端技术专家', city:'杭州', channel:'智联',
+      date:ago(12), prelimStatus:'screening', progressStatus:'', salary:'40-60K', contact:'', link:'', note:'P7级别，数据可视化方向', interviews:[] },
+    { id:uid(), company:'美团', position:'前端开发', city:'北京', channel:'BOSS直聘',
+      date:ago(15), prelimStatus:'applied', progressStatus:'offer_declined', salary:'22-30K', contact:'', link:'', note:'到店事业群，薪资未达预期', interviews:[] },
+    { id:uid(), company:'小红书', position:'前端工程师', city:'上海', channel:'其他',
+      date:ago(20), prelimStatus:'screening_pass', progressStatus:'offer_accepted', salary:'28-38K·14薪', contact:'HR电话', link:'', note:'社区方向，团队氛围好',
+      interviews:[
+        { date:ago(18), round:'一面', interviewer:'王工', summary:'基础题为主，CSS布局、JS异步、性能优化。' },
+        { date:ago(16), round:'二面', interviewer:'赵总', summary:'项目深挖，关注工程化和协作。' }
+      ]},
+    { id:uid(), company:'华为', position:'前端开发工程师', city:'东莞', channel:'国聘',
+      date:ago(6), prelimStatus:'resume_rejected', progressStatus:'', salary:'', contact:'', link:'', note:'简历未通过筛选，专业方向不太匹配', interviews:[] },
+    { id:uid(), company:'快手', position:'资深前端开发', city:'北京', channel:'官网',
+      date:ago(25), prelimStatus:'screening_pass', progressStatus:'negotiate', salary:'35-50K', contact:'', link:'', note:'直播业务线', interviews:[] },
+    { id:uid(), company:'拼多多', position:'前端开发工程师', city:'上海', channel:'BOSS直聘',
+      date:ago(2), prelimStatus:'applied', progressStatus:'', salary:'30-45K', contact:'', link:'', note:'电商前端', interviews:[] },
+    { id:uid(), company:'网易', position:'高级前端工程师', city:'杭州', channel:'前程无忧',
+      date:ago(30), prelimStatus:'screening', progressStatus:'exam', salary:'', contact:'', link:'', note:'云音乐部门，已收到笔试通知', interviews:[] }
+  ];
+  saveData();
+}
+
+// ==================== Helpers ====================
+function getPrelimInfo(key) {
+  for (var i=0; i<PRELIM_STATUS_LIST.length; i++) {
+    if (PRELIM_STATUS_LIST[i].key === key) return PRELIM_STATUS_LIST[i];
+  }
+  return PRELIM_STATUS_LIST[0];
+}
+
+function getProgressInfo(key) {
+  for (var i=0; i<PROGRESS_STATUS_LIST.length; i++) {
+    if (PROGRESS_STATUS_LIST[i].key === key) return PROGRESS_STATUS_LIST[i];
+  }
+  return PROGRESS_STATUS_LIST[0];
+}
+
+function fmtDate(d) {
+  if (!d) return '';
+  var dt = new Date(d);
+  return (dt.getMonth()+1) + '月' + dt.getDate() + '日';
+}
+
+function fmtDateFull(d) {
+  if (!d) return '';
+  var dt = new Date(d);
+  return dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0');
+}
+
+function daysFromNow(d) {
+  if (!d) return null;
+  var target = new Date(d); target.setHours(0,0,0,0);
+  var now = new Date(); now.setHours(0,0,0,0);
+  return Math.round((target - now) / 86400000);
+}
+
+function companyColor(name) {
+  if (!name) return '#94a3b8';
+  var h = 0;
+  for (var i=0; i<name.length; i++) { h = name.charCodeAt(i) + ((h<<5)-h); }
+  return BAR_COLORS[Math.abs(h) % BAR_COLORS.length];
+}
+
+// ==================== Data masking (disabled - demo data is fully visible) ====================
+function maskCompany(name) { return name || '-'; }
+function maskPosition(pos) { return pos || ''; }
+function maskDetail(text) { return text || ''; }
+
+// ==================== Navigation ====================
+var navBtns = document.querySelectorAll('.nav-btn');
+for (var ni = 0; ni < navBtns.length; ni++) {
+  (function(btn) {
+    btn.addEventListener('click', function() {
+      for (var j=0; j<navBtns.length; j++) { navBtns[j].classList.remove('active'); }
+      btn.classList.add('active');
+      var pages = document.querySelectorAll('.page');
+      for (var k=0; k<pages.length; k++) { pages[k].classList.remove('active'); }
+      var pageEl = document.getElementById('page-' + btn.dataset.page);
+      if (pageEl) { pageEl.classList.add('active'); renderAll(); }
+    });
+  })(navBtns[ni]);
+}
+
+// ==================== Fill Selects ====================
+function fillSelects() {
+  var el;
+  // Preliminary status dropdowns
+  el = document.getElementById('fPrelimStatus');
+  if (el) { el.innerHTML = ''; for (var i=0; i<PRELIM_STATUS_LIST.length; i++) { el.innerHTML += '<option value="'+PRELIM_STATUS_LIST[i].key+'">'+PRELIM_STATUS_LIST[i].label+'</option>'; } }
+  el = document.getElementById('filterPrelimStatus');
+  if (el) { el.innerHTML = '<option value="">全部初步状态</option>'; for (var i=0; i<PRELIM_STATUS_LIST.length; i++) { el.innerHTML += '<option value="'+PRELIM_STATUS_LIST[i].key+'">'+PRELIM_STATUS_LIST[i].label+'</option>'; } }
+
+  // Progress status dropdowns
+  el = document.getElementById('fProgressStatus');
+  if (el) { el.innerHTML = ''; for (var i=0; i<PROGRESS_STATUS_LIST.length; i++) { el.innerHTML += '<option value="'+PROGRESS_STATUS_LIST[i].key+'">'+PROGRESS_STATUS_LIST[i].label+'</option>'; } }
+  el = document.getElementById('filterProgressStatus');
+  if (el) { el.innerHTML = '<option value="">全部具体进展</option>'; for (var i=0; i<PROGRESS_STATUS_LIST.length; i++) { el.innerHTML += '<option value="'+PROGRESS_STATUS_LIST[i].key+'">'+PROGRESS_STATUS_LIST[i].label+'</option>'; } }
+
+  // Channel dropdowns
+  el = document.getElementById('fChannel');
+  if (el) { el.innerHTML = ''; for (var i=0; i<CHANNELS.length; i++) { el.innerHTML += '<option value="'+CHANNELS[i]+'">'+CHANNELS[i]+'</option>'; } }
+  el = document.getElementById('filterChannel');
+  if (el) { el.innerHTML = '<option value="">全部渠道</option>'; for (var i=0; i<CHANNELS.length; i++) { el.innerHTML += '<option value="'+CHANNELS[i]+'">'+CHANNELS[i]+'</option>'; } }
+}
+
+function setTodayDate() {
+  var d = new Date();
+  var week = ['周日','周一','周二','周三','周四','周五','周六'][d.getDay()];
+  var el = document.getElementById('todayDate');
+  if (el) { el.textContent = d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日 '+week; }
+}
+
+// ==================== Dashboard ====================
+function renderDashboard() {
+  var recs = DATA.records;
+  var total = recs.length;
+
+  // Stats cards
+  var interviewing = 0;
+  var offers = 0;
+  var rejected = 0;
+  var responded = 0;
+  for (var i=0; i<recs.length; i++) {
+    var ps = recs[i].progressStatus||'';
+    var ps_pre = recs[i].prelimStatus||'';
+    if (ps === 'exam' || ps === 'ai_interview' || ps === 'round1' || ps === 'round2' || ps === 'final_round' || ps === 'negotiate') interviewing++;
+    if (ps === 'offer_accepted') offers++;
+    if (ps_pre === 'resume_rejected' || ps === 'offer_declined') rejected++;
+    if (ps_pre !== 'pending' && ps_pre !== 'applied' && ps_pre !== '') responded++;
+  }
+  var responseRate = total ? Math.round(responded/total*100) : 0;
+  var offerRate = total ? Math.round(offers/total*100) : 0;
+  var survivedRate = total ? Math.round((total-rejected)/total*100) : 0;
+
+  var cards = [
+    { icon:'📭', label:'累计投递', value:total, sub:'<span style="color:#2563eb">持续投递中</span>' },
+    { icon:'🎯', label:'面试流程中', value:interviewing, sub:'回复率 '+responseRate+'%' },
+    { icon:'🎉', label:'获得Offer', value:offers, sub:'Offer率 '+offerRate+'%' },
+    { icon:'📋', label:'已拒绝', value:rejected, sub:'存活率 '+survivedRate+'%' }
+  ];
+  var html = '';
+  for (var i=0; i<cards.length; i++) {
+    html += '<div class="stat-card"><div class="icon">'+cards[i].icon+'</div><div class="label">'+cards[i].label+'</div><div class="value">'+cards[i].value+'</div><div class="sub">'+cards[i].sub+'</div></div>';
+  }
+  var grid = document.getElementById('statsGrid');
+  if (grid) grid.innerHTML = html;
+
+  // Funnel
+  var funnelStages = [
+    { label:'已投递', check: function(s) { return s.prelimStatus==='applied'||s.prelimStatus==='screening'||s.prelimStatus==='screening_pass'||s.prelimStatus==='resume_rejected'||!!s.progressStatus; } },
+    { label:'初筛通过', check: function(s) { return s.prelimStatus==='screening_pass'||!!s.progressStatus; } },
+    { label:'面试/流程中', check: function(s) { var p=s.progressStatus||''; return p==='exam'||p==='ai_interview'||p==='round1'||p==='round2'||p==='final_round'||p==='negotiate'||(s.interviews&&s.interviews.length>0); } },
+    { label:'已接受Offer', check: function(s) { return s.progressStatus==='offer_accepted'; } }
+  ];
+  var maxCount = 0;
+  var funnelVals = [];
+  for (var i=0; i<funnelStages.length; i++) {
+    var count = 0;
+    for (var j=0; j<recs.length; j++) {
+      if (funnelStages[i].check(recs[j])) count++;
+    }
+    funnelVals.push(count);
+    if (count > maxCount) maxCount = count;
+  }
+  if (total === 0) maxCount = 1;
+  var funnelColors = ['#2563eb','#0d9488','#7c3aed','#16a34a'];
+  var funnelHtml = '';
+  for (var i=0; i<funnelStages.length; i++) {
+    var pct = Math.round(funnelVals[i]/maxCount*100);
+    var prevCount = i>0 ? funnelVals[i-1] : funnelVals[i];
+    var rate = prevCount ? Math.round(funnelVals[i]/prevCount*100) : 0;
+    funnelHtml += '<div class="funnel-item">';
+    funnelHtml += '<div class="funnel-label">'+funnelStages[i].label+'</div>';
+    funnelHtml += '<div class="funnel-bar-wrap"><div class="funnel-bar" style="width:'+Math.max(pct,8)+'%;background:'+funnelColors[i]+'">'+funnelVals[i]+'</div></div>';
+    funnelHtml += '<div class="funnel-rate">'+(i>0&&prevCount>0?rate+'%':'')+'</div>';
+    funnelHtml += '</div>';
+  }
+  var funnelEl = document.getElementById('funnel');
+  if (funnelEl) funnelEl.innerHTML = funnelHtml || '<div class="empty-state"><div class="emoji">📊</div>暂无数据</div>';
+
+  // Upcoming interviews
+  var upcoming = [];
+  for (var i=0; i<recs.length; i++) {
+    var ivs = recs[i].interviews;
+    if (ivs && ivs.length) {
+      for (var j=0; j<ivs.length; j++) {
+        var d = daysFromNow(ivs[j].date);
+        if (d !== null && d >= -1) {
+          upcoming.push({ date:ivs[j].date, round:ivs[j].round, method:ivs[j].method, result:ivs[j].result, interviewer:ivs[j].interviewer, company:recs[i].company, position:recs[i].position, city:recs[i].city, days:d });
+        }
+      }
+    }
+  }
+  upcoming.sort(function(a,b) { return new Date(a.date)-new Date(b.date); });
+  upcoming = upcoming.slice(0, 5);
+  var upListEl = document.getElementById('upcomingList');
+  if (!upListEl) return;
+  if (upcoming.length === 0) {
+    upListEl.innerHTML = '<div class="empty-state"><div class="emoji">📅</div>暂无即将到来的面试</div>';
+  } else {
+    var upHtml = '<div class="upcoming-list">';
+    for (var i=0; i<upcoming.length; i++) {
+      var it = upcoming[i];
+      var dt = new Date(it.date);
+      var dayLabel = it.days===0?'今天':it.days===1?'明天':it.days+'天后';
+      upHtml += '<div class="upcoming-item">';
+      upHtml += '<div class="upcoming-date"><div class="day">'+dt.getDate()+'</div><div class="mon">'+(dt.getMonth()+1)+'月</div></div>';
+      upHtml += '<div class="upcoming-info"><div class="company">'+maskCompany(it.company)+' · '+(it.round||'面试')+'</div><div class="role">'+maskPosition(it.position)+(it.city?' · '+it.city:'')+'</div>';
+      if (it.method || it.interviewer) {
+        upHtml += '<div style="font-size:11px;color:#64748b;margin-top:2px">'+(currentUser?(it.method||'')+(it.method&&it.interviewer?' · ':'')+(it.interviewer||''):'')+'</div>';
+      }
+      upHtml += '<div class="upcoming-time">'+dayLabel+'</div>';
+      upHtml += '</div>';
+    }
+    upHtml += '</div>';
+    upListEl.innerHTML = upHtml;
+  }
+}
+
+// ==================== Dashboard Sections ====================
+function getActiveDashSections() {
+  if (!DATA.settings) DATA.settings = {};
+  if (!DATA.settings.dashSections) DATA.settings.dashSections = ['records','interviews','stats','timeline'];
+  return DATA.settings.dashSections;
+}
+
+function renderDashboardSections() {
+  var sections = getActiveDashSections();
+  var targets = {
+    records: { render: renderDashRecords },
+    interviews: { render: renderDashInterviews },
+    interview_records: { render: renderDashInterviewRecords },
+    stats: { render: renderDashStats },
+    timeline: { render: renderDashTimeline }
+  };
+  for (var i = 0; i < sections.length; i++) {
+    var t = targets[sections[i]];
+    if (t) t.render();
+  }
+}
+
+function renderDashRecords() {
+  var el = document.getElementById('dash-records');
+  if (!el) return;
+  var recs = DATA.records.slice();
+  recs.sort(function(a,b) { return (b.date||'').localeCompare(a.date||''); });
+  var html = '';
+  html += '<div class="card"><div class="card-head"><div class="card-title">求职记录</div></div>';
+  html += '<div class="card-body" style="padding:0"><div style="overflow-x:auto"><table>';
+  html += '<thead><tr><th>公司</th><th>城市</th><th>渠道</th><th>日期</th><th>初步状态</th><th>具体进展</th><th>操作</th></tr></thead><tbody>';
+  if (recs.length === 0) {
+    html += '<tr><td colspan="7"><div class="empty-state"><div class="emoji">📋</div>暂无记录</div></td></tr>';
+  } else {
+    for (var i = 0; i < recs.length; i++) {
+      var r = recs[i];
+      var pi = getPrelimInfo(r.prelimStatus || '');
+      var gi = getProgressInfo(r.progressStatus || '');
+      html += '<tr>';
+      html += '<td><div class="company-cell"><div class="company-avatar" style="background:'+companyColor(r.company)+'">'+(r.company?maskCompany(r.company)[0]:'?')+'</div><div><div class="company-name">'+maskCompany(r.company)+'</div><div class="company-role">'+maskPosition(r.position)+'</div></div></div></td>';
+      html += '<td>'+(r.city||'-')+'</td>';
+      html += '<td>'+(r.channel||'-')+'</td>';
+      html += '<td>'+fmtDate(r.date)+'</td>';
+      html += '<td><span class="badge '+pi.cls+'">'+pi.label+'</span></td>';
+      html += '<td>'+(gi.key?'<span class="badge '+gi.cls+'">'+gi.label+'</span>':'-')+'</td>';
+      html += '<td>' + (currentUser ? '<button class="btn btn-ghost btn-sm" data-edit-dash="'+r.id+'">编辑</button>' : '<span style="color:#94a3b8;font-size:12px">—</span>') + '</td>';
+      html += '</tr>';
+    }
+  }
+  html += '</tbody></table></div></div></div>';
+  el.innerHTML = html;
+  // Bind edit buttons
+  var btns = el.querySelectorAll('[data-edit-dash]');
+  for (var i = 0; i < btns.length; i++) {
+    (function(id) {
+      btns[i].addEventListener('click', function() { openModal(id); });
+    })(btns[i].getAttribute('data-edit-dash'));
+  }
+}
+
+function renderDashInterviews() {
+  var el = document.getElementById('dash-interviews');
+  if (!el) return;
+  // Collect all interviews with company info
+  var all = [];
+  for (var i = 0; i < DATA.records.length; i++) {
+    var r = DATA.records[i];
+    if (r.interviews && r.interviews.length) {
+      for (var j = 0; j < r.interviews.length; j++) {
+        var iv = r.interviews[j];
+        all.push({ company: r.company, position: r.position, city: r.city, date: iv.date, round: iv.round, method: iv.method, result: iv.result, interviewer: iv.interviewer, summary: iv.summary, techPoints: iv.techPoints, selfEval: iv.selfEval, recordId: r.id });
+      }
+    }
+  }
+  all.sort(function(a,b) { return new Date(b.date)-new Date(a.date); });
+
+  var html = '<div class="card"><div class="card-head"><div class="card-title">面试日程</div></div><div class="card-body">';
+  if (all.length === 0) {
+    html += '<div class="empty-state"><div class="emoji">📅</div>暂无面试记录</div>';
+  } else {
+    html += '<div class="upcoming-list">';
+    for (var i = 0; i < all.length; i++) {
+      var it = all[i];
+      var resultBadge = '';
+      if (it.result === '通过') resultBadge = '<span class="badge" style="background:#dcfce7;color:#16a34a">通过</span>';
+      else if (it.result === '未通过') resultBadge = '<span class="badge" style="background:#fee2e2;color:#dc2626">未通过</span>';
+      else if (it.result === '待定') resultBadge = '<span class="badge" style="background:#fef3c7;color:#d97706">待定</span>';
+      html += '<div class="upcoming-item">';
+      var dt2 = it.date ? new Date(it.date) : null;
+      html += '<div class="upcoming-date"><div class="day">'+(dt2?dt2.getDate():'—')+'</div><div class="mon">'+(dt2?(dt2.getMonth()+1)+'月':'')+'</div></div>';
+      html += '<div class="upcoming-info"><div class="company">'+maskCompany(it.company)+' · '+(it.round||'面试')+' '+resultBadge+'</div>';
+      html += '<div class="role">'+maskPosition(it.position)+(it.city?' · '+it.city:'')+'</div>';
+      html += '</div></div>';
+    }
+    html += '</div>';
+  }
+  html += '</div></div>';
+  el.innerHTML = html;
+}
+
+function renderDashInterviewRecords() {
+  var el = document.getElementById('dash-interview_records');
+  if (!el) return;
+  var all = [];
+  for (var i=0; i<DATA.records.length; i++) {
+    var r = DATA.records[i];
+    if (r.interviews && r.interviews.length) {
+      for (var j=0; j<r.interviews.length; j++) {
+        var iv = r.interviews[j];
+        all.push({ date:iv.date, round:iv.round, result:iv.result||'', summary:iv.summary||'', company:r.company, position:r.position, city:r.city });
+      }
+    }
+  }
+  all.sort(function(a,b) { return (b.date||'').localeCompare(a.date||''); });
+  var html = '<div class="card"><div class="card-head"><div class="card-title">面试记录</div></div><div class="card-body">';
+  if (all.length === 0) {
+    html += '<div class="empty-state"><div class="emoji">🎤</div>暂无面试记录</div>';
+  } else {
+    var maxShow = 5;
+    for (var i=0; i<Math.min(all.length, maxShow); i++) {
+      var it = all[i];
+      var dt = it.date ? new Date(it.date) : null;
+      var resultBadge = '';
+      if (it.result === '通过') resultBadge = ' <span class="badge" style="background:#dcfce7;color:#16a34a">通过</span>';
+      else if (it.result === '未通过') resultBadge = ' <span class="badge" style="background:#fee2e2;color:#dc2626">未通过</span>';
+      else if (it.result === '待定') resultBadge = ' <span class="badge" style="background:#fef3c7;color:#d97706">待定</span>';
+      html += '<div style="display:flex;align-items:center;padding:10px 0;border-bottom:1px solid #f1f5f9;gap:12px">';
+      html += '<div style="min-width:40px;text-align:center"><div style="font-size:18px;font-weight:700;color:var(--text)">'+(dt?dt.getDate():'—')+'</div><div style="font-size:10px;color:#94a3b8">'+(dt?(dt.getMonth()+1)+'月':'')+'</div></div>';
+      html += '<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600">'+maskCompany(it.company)+'<span style="font-size:11px;font-weight:400;color:#7c3aed;margin-left:8px">'+it.round+'</span>'+resultBadge+'</div><div style="font-size:12px;color:#64748b">'+maskPosition(it.position)+(it.city?' · '+it.city:'')+'</div></div>';
+      html += '</div>';
+    }
+    if (all.length > maxShow) {
+      html += '<div style="text-align:center;padding:12px 0;color:var(--primary);font-size:13px;cursor:pointer">查看全部 '+all.length+' 条记录 →</div>';
+    }
+  }
+  html += '</div></div>';
+  el.innerHTML = html;
+}
+
+function renderDashStats() {
+  var el = document.getElementById('dash-stats');
+  if (!el) return;
+  var recs = DATA.records;
+  var total = recs.length;
+  if (total === 0) {
+    el.innerHTML = '<div class="card"><div class="card-head"><div class="card-title">数据分析</div></div><div class="card-body"><div class="empty-state"><div class="emoji">📊</div>暂无数据</div></div></div>';
+    return;
+  }
+  // Channel distribution
+  var chCount = {};
+  for (var i = 0; i < recs.length; i++) {
+    var ch = recs[i].channel || '其他';
+    chCount[ch] = (chCount[ch] || 0) + 1;
+  }
+  var chKeys = Object.keys(chCount);
+  chKeys.sort(function(a,b) { return chCount[b]-chCount[a]; });
+  chKeys = chKeys.slice(0, 8);
+  var maxCh = 0;
+  for (var i = 0; i < chKeys.length; i++) { if (chCount[chKeys[i]] > maxCh) maxCh = chCount[chKeys[i]]; }
+
+  var html = '<div class="card"><div class="card-head"><div class="card-title">数据分析</div></div><div class="card-body">';
+  html += '<div style="font-weight:600;font-size:13px;margin-bottom:10px;color:var(--text)">渠道分布</div>';
+  for (var i = 0; i < chKeys.length; i++) {
+    var pct = maxCh ? Math.round(chCount[chKeys[i]]/maxCh*100) : 0;
+    html += '<div style="display:flex;align-items:center;margin-bottom:8px;gap:8px"><div style="width:80px;font-size:12px;color:var(--text-muted);text-align:right;flex-shrink:0">'+chKeys[i]+'</div><div style="flex:1;height:18px;background:#e2e8f0;border-radius:4px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,#2563eb,#3b82f6);border-radius:4px;min-width:2px"></div></div><div style="width:28px;font-size:12px;color:var(--text);text-align:left;font-weight:600">'+chCount[chKeys[i]]+'</div></div>';
+  }
+  // Prelim status bars
+  html += '<div style="font-weight:600;font-size:13px;margin:16px 0 10px;color:var(--text)">初步状态分布</div>';
+  for (var i = 0; i < PRELIM_STATUS_LIST.length; i++) {
+    var k = PRELIM_STATUS_LIST[i];
+    var cnt = 0;
+    for (var j = 0; j < recs.length; j++) { if (recs[j].prelimStatus === k.key) cnt++; }
+    var pct = maxCnt(recs, 'prelimStatus') ? Math.round(cnt/maxCnt(recs,'prelimStatus')*100) : 0;
+    html += '<div style="display:flex;align-items:center;margin-bottom:6px;gap:8px"><div style="width:80px;font-size:12px;color:var(--text-muted);text-align:right;flex-shrink:0">'+k.label+'</div><div style="flex:1;height:16px;background:#e2e8f0;border-radius:4px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+(PRELIM_COLORS[k.key]||'#94a3b8')+';border-radius:4px;min-width:2px"></div></div><div style="width:28px;font-size:12px;color:var(--text);text-align:left;font-weight:600">'+cnt+'</div></div>';
+  }
+  html += '</div></div>';
+  el.innerHTML = html;
+}
+
+function maxCnt(recs, field) {
+  var m = 1;
+  for (var i = 0; i < recs.length; i++) {
+    var c = 0; var v = recs[i][field];
+    for (var j = 0; j < recs.length; j++) { if (recs[j][field] === v) c++; }
+    if (c > m) m = c;
+  }
+  return m;
+}
+
+function renderDashTimeline() {
+  var el = document.getElementById('dash-timeline');
+  if (!el) return;
+  var recs = DATA.records.slice();
+  recs.sort(function(a,b) { return (b.date||'').localeCompare(a.date||''); });
+
+  // Build timeline events
+  var events = [];
+  for (var i = 0; i < recs.length; i++) {
+    var r = recs[i];
+    // Add application event
+    events.push({ date: r.date, type: 'apply', company: r.company, position: r.position, channel: r.channel, pi: getPrelimInfo(r.prelimStatus||''), gi: getProgressInfo(r.progressStatus||'') });
+    // Add interview events
+    if (r.interviews && r.interviews.length) {
+      for (var j = 0; j < r.interviews.length; j++) {
+        var iv = r.interviews[j];
+        events.push({ date: iv.date, type: 'interview', company: r.company, round: iv.round, result: iv.result, summary: iv.summary });
+      }
+    }
+  }
+  events.sort(function(a,b) { return (b.date||'').localeCompare(a.date||''); });
+
+  var html = '<div class="card"><div class="card-head"><div class="card-title">时间线</div></div><div class="card-body">';
+  if (events.length === 0) {
+    html += '<div class="empty-state"><div class="emoji">📅</div>暂无记录</div>';
+  } else {
+    html += '<div class="timeline-wrap">';
+    var lastMonth = '';
+    for (var i = 0; i < events.length; i++) {
+      var ev = events[i];
+      if (!ev.date) continue;
+      var d = new Date(ev.date);
+      var mon = d.getFullYear()+'年'+(d.getMonth()+1)+'月';
+      if (mon !== lastMonth) {
+        lastMonth = mon;
+        html += '<div class="timeline-month">'+mon+'</div>';
+      }
+      html += '<div class="timeline-item">';
+      html += '<div class="timeline-dot" style="background:'+(ev.type==='interview'?'#7c3aed':'#2563eb')+'"></div>';
+      html += '<div class="timeline-content">';
+      html += '<div class="timeline-date">'+(d.getMonth()+1)+'月'+d.getDate()+'日</div>';
+      if (ev.type === 'interview') {
+        html += '<div><strong>'+maskCompany(ev.company)+'</strong> · '+(ev.round||'面试')+'</div>';
+        if (ev.result) html += '<div style="font-size:12px;color:#64748b">结果：'+ev.result+'</div>';
+        if (ev.summary) html += '<div style="font-size:12px;color:#64748b;margin-top:4px">'+maskDetail(ev.summary).substring(0,60)+(ev.summary.length>60?'…':'')+'</div>';
+      } else {
+        html += '<div><strong>'+maskCompany(ev.company)+'</strong> · '+maskPosition(ev.position)+'（'+ev.channel+'）</div>';
+        var st = ev.gi.key ? ev.gi.label : ev.pi.label;
+        html += '<div style="font-size:12px;color:#64748b">'+st+'</div>';
+      }
+      html += '</div></div>';
+    }
+    html += '</div>';
+  }
+  html += '</div></div>';
+  el.innerHTML = html;
+}
+function renderRecords() {
+  var searchEl = document.getElementById('searchInput');
+  var fPrelimEl = document.getElementById('filterPrelimStatus');
+  var fProgressEl = document.getElementById('filterProgressStatus');
+  var fChannelEl = document.getElementById('filterChannel');
+  var bodyEl = document.getElementById('recordsBody');
+  if (!bodyEl) return;
+
+  var search = searchEl ? searchEl.value.toLowerCase() : '';
+  var fPrelim = fPrelimEl ? fPrelimEl.value : '';
+  var fProgress = fProgressEl ? fProgressEl.value : '';
+  var fChannel = fChannelEl ? fChannelEl.value : '';
+
+  var filtered = [];
+  for (var i=0; i<DATA.records.length; i++) {
+    var r = DATA.records[i];
+    if (search && r.company.toLowerCase().indexOf(search)===-1 && r.position.toLowerCase().indexOf(search)===-1) continue;
+    if (fPrelim && r.prelimStatus !== fPrelim) continue;
+    if (fProgress && r.progressStatus !== fProgress) continue;
+    if (fChannel && r.channel !== fChannel) continue;
+    filtered.push(r);
+  }
+  filtered.sort(function(a,b) { return (b.date||'').localeCompare(a.date||''); });
+
+  if (filtered.length === 0) {
+    bodyEl.innerHTML = '<tr><td colspan="9"><div class="empty-state"><div class="emoji">📋</div>' + (currentUser ? '暂无记录，点击「新增投递」开始' : '暂无记录，登录后可编辑') + '</div></td></tr>';
+    return;
+  }
+
+  var html = '';
+  for (var i=0; i<filtered.length; i++) {
+    var r = filtered[i];
+    var pi = getPrelimInfo(r.prelimStatus||'');
+    var gi = getProgressInfo(r.progressStatus||'');
+    var ivCount = r.interviews ? r.interviews.length : 0;
+    html += '<tr>';
+    html += '<td><div class="company-cell"><div class="company-avatar" style="background:'+companyColor(r.company)+'">'+(r.company?maskCompany(r.company)[0]:'?')+'</div><div><div class="company-name">'+maskCompany(r.company)+'</div><div class="company-role">'+maskPosition(r.position)+'</div></div></div></td>';
+    html += '<td>'+(r.city||'-')+'</td>';
+    html += '<td>'+(r.channel||'-')+'</td>';
+    html += '<td>'+fmtDateFull(r.date)+'</td>';
+    html += '<td><span class="badge '+pi.cls+'">'+pi.label+'</span></td>';
+    html += '<td>'+(gi.key?'<span class="badge '+gi.cls+'">'+gi.label+'</span>':'-')+'</td>';
+    html += '<td>'+(r.salary||'-')+'</td>';
+    var ivHtml = '';
+    if (ivCount > 0) {
+      ivHtml = '<span class="badge" style="background:#ffedd5;color:#ea580c;cursor:default" title="';
+      for (var j=0; j<r.interviews.length; j++) {
+        var ivr = r.interviews[j];
+        ivHtml += (ivr.round||'第'+(j+1)+'轮')+(ivr.result?'('+ivr.result+')':'');
+        if (j < r.interviews.length-1) ivHtml += ' → ';
+      }
+      ivHtml += '">'+ivCount+'轮</span>';
+    } else {
+      ivHtml = '-';
+    }
+    html += '<td>'+ivHtml+'</td>';
+    html += '<td>' + (currentUser ? '<div class="actions"><button class="icon-btn" data-edit="'+r.id+'" title="编辑">✎</button><button class="icon-btn del" data-del="'+r.id+'" title="删除">🗑</button></div>' : '<span style="color:#94a3b8;font-size:12px">—</span>') + '</td>';
+    html += '</tr>';
+  }
+  bodyEl.innerHTML = html;
+
+  // Bind edit/delete buttons
+  var editBtns = bodyEl.querySelectorAll('[data-edit]');
+  for (var i=0; i<editBtns.length; i++) {
+    (function(id) {
+      editBtns[i].addEventListener('click', function() { openModal(id); });
+    })(editBtns[i].dataset.edit);
+  }
+  var delBtns = bodyEl.querySelectorAll('[data-del]');
+  for (var i=0; i<delBtns.length; i++) {
+    (function(id) {
+      delBtns[i].addEventListener('click', function() { deleteRecord(id); });
+    })(delBtns[i].dataset.del);
+  }
+}
+
+// ==================== Interviews ====================
+function renderInterviews() {
+  var all = [];
+  for (var i=0; i<DATA.records.length; i++) {
+    var r = DATA.records[i];
+    if (r.interviews && r.interviews.length) {
+      for (var j=0; j<r.interviews.length; j++) {
+        var iv = r.interviews[j];
+        all.push({
+          date: iv.date,
+          round: iv.round,
+          method: iv.method||'',
+          duration: iv.duration||'',
+          interviewer: iv.interviewer||'',
+          result: iv.result||'',
+          techPoints: iv.techPoints||'',
+          summary: iv.summary||'',
+          selfEval: iv.selfEval||'',
+          company: r.company,
+          position: r.position,
+          city: r.city,
+          recordId: r.id
+        });
+      }
+    }
+  }
+  all.sort(function(a,b) { return (b.date||'').localeCompare(a.date||''); });
+
+  // Group by company
+  var groups = {};
+  for (var i=0; i<all.length; i++) {
+    var key = all[i].company;
+    if (!groups[key]) groups[key] = { company: all[i].company, position: all[i].position, city: all[i].city, recordId: all[i].recordId, rounds: [] };
+    groups[key].rounds.push(all[i]);
+  }
+
+  var wrap = document.getElementById('interviewFullList');
+  if (!wrap) return;
+  if (all.length === 0) {
+    wrap.innerHTML = '<div class="empty-state"><div class="emoji">🎤</div>暂无面试记录</div>';
+    return;
+  }
+
+  var html = '';
+  var companyKeys = [];
+  for (var k in groups) { if (groups.hasOwnProperty(k)) companyKeys.push(k); }
+  companyKeys.sort(function(a,b) {
+    var aMax = '', bMax = '';
+    var ra = groups[a].rounds;
+    var rb = groups[b].rounds;
+    for (var i=0; i<ra.length; i++) { if (ra[i].date > aMax) aMax = ra[i].date; }
+    for (var i=0; i<rb.length; i++) { if (rb[i].date > bMax) bMax = rb[i].date; }
+    return bMax.localeCompare(aMax);
+  });
+
+  for (var gi=0; gi<companyKeys.length; gi++) {
+    var g = groups[companyKeys[gi]];
+    var rounds = g.rounds;
+    // Sort rounds by date ascending
+    rounds.sort(function(a,b) { return (a.date||'').localeCompare(b.date||''); });
+
+    html += '<div class="interview-group">';
+
+    // Company header
+    html += '<div class="interview-group-header">';
+    html += '<div class="ig-company">'+maskCompany(g.company)+'</div>';
+    html += '<div class="ig-position">'+maskPosition(g.position)+(g.city?' · '+g.city:'')+'</div>';
+    html += '<div class="ig-round-count">共 '+rounds.length+' 轮面试</div>';
+    html += (currentUser ? '<button class="btn btn-ghost btn-sm" onclick="openModal(\''+g.recordId+'\')" style="margin-left:auto">✎ 编辑</button>' : '');
+    html += '</div>';
+
+    // Round progression
+    html += '<div class="round-timeline">';
+    for (var ri=0; ri<rounds.length; ri++) {
+      var rv = rounds[ri];
+      var dt = new Date(rv.date);
+      var d = daysFromNow(rv.date);
+      var resultBadge = '';
+      if (rv.result === '通过') resultBadge = '<span class="badge s-offer">通过</span>';
+      else if (rv.result === '待定') resultBadge = '<span class="badge s-interview">待定</span>';
+      else if (rv.result === '未通过') resultBadge = '<span class="badge s-rejected">未通过</span>';
+
+      var dayTag = '';
+      if (d !== null) {
+        if (d > 7) dayTag = '<span class="badge" style="background:#f1f5f9;color:#64748b">已结束</span>';
+        else if (d > 0) dayTag = '<span class="badge" style="background:#dbeafe;color:#2563eb">'+d+'天后</span>';
+        else if (d === 0) dayTag = '<span class="badge" style="background:#dcfce7;color:#16a34a">今天</span>';
+        else if (d === -1) dayTag = '<span class="badge" style="background:#dcfce7;color:#16a34a">昨天</span>';
+        else dayTag = '<span class="badge" style="background:#f1f5f9;color:#64748b">已结束</span>';
+      }
+
+      html += '<div class="round-node">';
+      html += '<div class="round-line'+(ri===0?' rl-first':'')+(ri===rounds.length-1?' rl-last':'')+'"></div>';
+      html += '<div class="round-dot '+(rv.result==='通过'?'rd-pass':rv.result==='未通过'?'rd-fail':rv.result==='待定'?'rd-pending':'')+'"></div>';
+      html += '<div class="round-card">';
+      html += '<div class="round-card-head">';
+      html += '<span class="round-badge">'+(rv.round||'第'+(ri+1)+'轮')+'</span>';
+      html += '<span class="round-date">'+(dt.getMonth()+1)+'月'+dt.getDate()+'日</span>';
+      html += dayTag;
+      html += resultBadge;
+      html += '</div>';
+      html += '</div>'; // round-card
+      html += '</div>'; // round-node
+    }
+    html += '</div>'; // round-timeline
+    html += '</div>'; // interview-group
+  }
+  wrap.innerHTML = html;
+
+  // Bind edit buttons
+  var btns = wrap.querySelectorAll('[data-edit]');
+  for (var i=0; i<btns.length; i++) {
+    (function(id) {
+      btns[i].addEventListener('click', function() { openModal(id); });
+    })(btns[i].dataset.edit);
+  }
+}
+
+// ==================== Interview Records ====================
+function renderInterviewRecords() {
+  var all = [];
+  for (var i=0; i<DATA.records.length; i++) {
+    var r = DATA.records[i];
+    if (r.interviews && r.interviews.length) {
+      for (var j=0; j<r.interviews.length; j++) {
+        var iv = r.interviews[j];
+        all.push({
+          date: iv.date,
+          round: iv.round,
+          method: iv.method||'',
+          duration: iv.duration||'',
+          interviewer: iv.interviewer||'',
+          result: iv.result||'',
+          techPoints: iv.techPoints||'',
+          summary: iv.summary||'',
+          selfEval: iv.selfEval||'',
+          company: r.company,
+          position: r.position,
+          city: r.city,
+          channel: r.channel||'',
+          recordId: r.id
+        });
+      }
+    }
+  }
+  all.sort(function(a,b) { return (b.date||'').localeCompare(a.date||''); });
+
+  var wrap = document.getElementById('interviewRecordsList');
+  if (!wrap) return;
+
+  if (all.length === 0) {
+    wrap.innerHTML = '<div class="ir-empty"><div style="font-size:48px;margin-bottom:12px">🎤</div><div style="font-size:15px;color:var(--text-muted)">暂无面试记录</div><div style="font-size:12px;color:var(--text-light);margin-top:6px">在投递记录中添加面试后，这里会显示所有面试详情</div></div>';
+    return;
+  }
+
+  var html = '';
+  for (var i=0; i<all.length; i++) {
+    var it = all[i];
+    var dt = new Date(it.date);
+    var resultBadge = '';
+    if (it.result === '通过') resultBadge = ' <span class="badge s-offer">通过</span>';
+    else if (it.result === '待定') resultBadge = ' <span class="badge s-interview">待定</span>';
+    else if (it.result === '未通过') resultBadge = ' <span class="badge s-rejected">未通过</span>';
+
+    var d = daysFromNow(it.date);
+    var dayTag = '';
+    if (d !== null) {
+      if (d > 7) dayTag = '';
+      else if (d > 0) dayTag = '<span style="font-size:11px;color:#2563eb;font-weight:500">'+d+'天后</span>';
+      else if (d === 0) dayTag = '<span style="font-size:11px;color:#16a34a;font-weight:500">今天</span>';
+      else if (d === -1) dayTag = '<span style="font-size:11px;color:#16a34a;font-weight:500">昨天</span>';
+    }
+
+    html += '<div class="ir-card">';
+    // Header
+    html += '<div class="ir-card-head">';
+    html += '<div class="ir-company">'+maskCompany(it.company)+'</div>';
+    html += '<div class="ir-position">'+maskPosition(it.position)+(it.city?' · '+it.city:'')+(it.channel?' · '+it.channel:'')+'</div>';
+    html += '<span class="ir-round">'+it.round+'</span>';
+    html += resultBadge;
+    html += '<div class="ir-date">'+dayTag+(dayTag?' ':'')+(dt.getMonth()+1)+'月'+dt.getDate()+'日</div>';
+    html += '</div>';
+
+    // Meta
+    html += '<div class="ir-meta">';
+    if (it.method) html += '<span>'+it.method+'</span>';
+    if (it.duration) html += '<span>约 '+it.duration+' 分钟</span>';
+    if (it.interviewer) html += '<span>面试官：'+it.interviewer+'</span>';
+    html += '</div>';
+
+    // Details
+    var hasDetail = false;
+    var detailHtml = '';
+    if (it.techPoints) {
+      hasDetail = true;
+      detailHtml += '<div class="ir-detail-title">技术考察点</div><div>'+maskDetail(it.techPoints)+'</div>';
+    }
+    if (it.summary) {
+      if (hasDetail) detailHtml += '<div style="margin-top:10px"></div>';
+      hasDetail = true;
+      detailHtml += '<div class="ir-detail-title">面试总结</div><div>'+maskDetail(it.summary)+'</div>';
+    }
+    if (it.selfEval) {
+      if (hasDetail) detailHtml += '<div style="margin-top:10px"></div>';
+      hasDetail = true;
+      detailHtml += '<div class="ir-detail-title">自我评价</div><div>'+maskDetail(it.selfEval)+'</div>';
+    }
+    if (hasDetail) {
+      html += '<div class="ir-detail">'+detailHtml+'</div>';
+    }
+
+    html += '</div>';
+  }
+  wrap.innerHTML = html;
+}
+
+// ==================== Stats ====================
+function renderStats() {
+  var recs = DATA.records;
+  var total = recs.length;
+
+  // Preliminary status pie
+  var preCount = {};
+  for (var i=0; i<recs.length; i++) {
+    var ps = recs[i].prelimStatus || 'pending';
+    preCount[ps] = (preCount[ps]||0) + 1;
+  }
+  var preKeys = Object.keys(preCount);
+  var pieEl = document.getElementById('statusPie');
+  if (pieEl && total > 0) {
+    var gradientParts = [];
+    var legendHtml = '<div style="font-weight:600;margin-bottom:6px;color:var(--text)">初步状态分布</div>';
+    var offset = 0;
+    for (var i=0; i<preKeys.length; i++) {
+      var k = preKeys[i];
+      var pct = preCount[k]/total*100;
+      var color = PRELIM_COLORS[k] || '#94a3b8';
+      var label = getPrelimInfo(k).label;
+      gradientParts.push(color+' '+offset+'% '+Math.round(offset+pct)+'%');
+      legendHtml += '<div class="pie-legend-item"><div class="pie-legend-dot" style="background:'+color+'"></div>'+label+'：'+preCount[k]+' ('+Math.round(pct)+'%)</div>';
+      offset = Math.round(offset+pct);
+    }
+    pieEl.innerHTML = '<div class="pie-wrap"><div class="pie-chart" style="background:conic-gradient('+gradientParts.join(',')+')"></div><div class="pie-legend">'+legendHtml+'</div></div>';
+  } else if (pieEl) {
+    pieEl.innerHTML = '<div class="empty-state"><div class="emoji">📊</div>暂无数据</div>';
+  }
+
+  // Channel bars
+  var cCount = {};
+  for (var i=0; i<recs.length; i++) {
+    var ch = recs[i].channel;
+    if (ch) cCount[ch] = (cCount[ch]||0) + 1;
+  }
+  var chKeys = Object.keys(cCount);
+  chKeys.sort(function(a,b) { return cCount[b]-cCount[a]; });
+  renderBarChart('channelBars', chKeys, cCount, BAR_COLORS);
+
+  // Progress status bars
+  var progCount = {};
+  for (var i=0; i<recs.length; i++) {
+    var pg = recs[i].progressStatus||'';
+    if (pg) progCount[pg] = (progCount[pg]||0) + 1;
+  }
+  var progLabels = [];
+  for (var i=0; i<PROGRESS_STATUS_LIST.length; i++) {
+    if (PROGRESS_STATUS_LIST[i].key && progCount[PROGRESS_STATUS_LIST[i].key]) {
+      progLabels.push(PROGRESS_STATUS_LIST[i].label);
+      progCount[PROGRESS_STATUS_LIST[i].label] = progCount[PROGRESS_STATUS_LIST[i].key];
+    }
+  }
+  var progColors = [];
+  for (var i=0; i<progLabels.length; i++) {
+    for (var j=0; j<PROGRESS_STATUS_LIST.length; j++) {
+      if (PROGRESS_STATUS_LIST[j].label === progLabels[i]) {
+        progColors.push(PROGRESS_COLORS[PROGRESS_STATUS_LIST[j].key] || '#94a3b8');
+        break;
+      }
+    }
+  }
+  renderBarChart('progressBars', progLabels, progCount, progColors.length?progColors:['#94a3b8']);
+
+  // Weekly bars
+  var weeks = 8;
+  var wLabels = [], wCounts = [];
+  var today = new Date();
+  for (var i=weeks-1; i>=0; i--) {
+    var wEnd = new Date(today); wEnd.setDate(wEnd.getDate()-i*7);
+    var wStart = new Date(wEnd); wStart.setDate(wStart.getDate()-6);
+    var startStr = wStart.toISOString().slice(0,10);
+    var endStr = wEnd.toISOString().slice(0,10);
+    wLabels.push((wStart.getMonth()+1)+'/'+wStart.getDate());
+    var cnt = 0;
+    for (var j=0; j<recs.length; j++) {
+      if (recs[j].date >= startStr && recs[j].date <= endStr) cnt++;
+    }
+    wCounts.push(cnt);
+  }
+  renderBarChart('weeklyBars', wLabels, wCounts, ['#2563eb']);
+}
+
+function renderBarChart(elId, labels, countMap, colors) {
+  var el = document.getElementById(elId);
+  if (!el) return;
+  var maxVal = 0;
+  for (var i=0; i<labels.length; i++) {
+    var v = countMap[labels[i]] || labels[i] || 0;
+    if (typeof v === 'object') continue;
+    if (v > maxVal) maxVal = v;
+  }
+  if (maxVal === 0) { el.innerHTML = '<div class="empty-state"><div class="emoji">📊</div>暂无数据</div>'; return; }
+
+  var html = '<div class="bar-chart">';
+  for (var i=0; i<Math.min(labels.length, 10); i++) {
+    var label = labels[i];
+    var val = countMap[label] || label || 0;
+    if (typeof val === 'object') continue;
+    var pct = Math.round(val/maxVal*100);
+    var color = Array.isArray(colors) ? colors[i % colors.length] : colors[0];
+    html += '<div class="bar-row">';
+    html += '<div class="bar-label">'+label+'</div>';
+    html += '<div class="bar-track"><div class="bar-fill" style="width:'+Math.max(pct,6)+'%;background:'+color+'">'+(pct>15?val:'')+'</div></div>';
+    html += '<div class="bar-count">'+(pct<=15?val:'')+'</div>';
+    html += '</div>';
+  }
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+// ==================== Timeline ====================
+function renderTimeline() {
+  var recs = DATA.records.slice().sort(function(a,b) { return (b.date||'').localeCompare(a.date||''); });
+  var wrap = document.getElementById('timelineList');
+  if (!wrap) return;
+  if (recs.length === 0) {
+    wrap.innerHTML = '<div class="empty-state"><div class="emoji">⏳</div>暂无记录</div>';
+    return;
+  }
+  var html = '';
+  for (var i=0; i<recs.length; i++) {
+    var r = recs[i];
+    var pi = getPrelimInfo(r.prelimStatus||'');
+    var gi = getProgressInfo(r.progressStatus||'');
+    var statusTags = '';
+    statusTags += '<span class="badge '+pi.cls+'" style="margin-left:4px">'+pi.label+'</span>';
+    if (gi.key) statusTags += ' <span class="badge '+gi.cls+'">'+gi.label+'</span>';
+    html += '<div class="timeline-item">';
+    html += '<div class="timeline-dot"></div>';
+    html += '<div class="timeline-date">'+fmtDateFull(r.date)+'</div>';
+    html += '<div class="timeline-content">';
+    html += '<div class="tc-company">'+maskCompany(r.company)+statusTags+'</div>';
+    html += '<div class="tc-role">'+maskPosition(r.position)+(r.city?' · '+r.city:'')+(r.channel?' · '+r.channel:'')+(r.salary?' · '+r.salary:'')+'</div>';
+    if (r.note) html += '<div class="tc-note">'+maskDetail(r.note)+'</div>';
+    if (r.interviews && r.interviews.length) {
+      var rounds = [];
+      for (var j=0; j<r.interviews.length; j++) {
+        var rv = r.interviews[j];
+        var label = rv.round || ('第'+(j+1)+'轮');
+        if (rv.result) label += '('+rv.result+')';
+        rounds.push(label);
+      }
+      html += '<div class="tc-note" style="margin-top:8px">🎤 面试 '+r.interviews.length+' 轮：'+rounds.join(' → ')+'</div>';
+    }
+    html += '</div></div>';
+  }
+  wrap.innerHTML = html;
+}
+
+// ==================== Render All ====================
+function renderAll() {
+  var active = document.querySelector('.page.active');
+  if (!active) return;
+  var page = active.id.replace('page-','');
+  if (page === 'dashboard') {
+    renderDashboard();
+    renderDashboardSections();
+  }
+  else if (page === 'records') renderRecords();
+  else if (page === 'interviews') renderInterviews();
+  else if (page === 'interview_records') renderInterviewRecords();
+  else if (page === 'stats') renderStats();
+  else if (page === 'timeline') renderTimeline();
+}
+
+// ==================== Modal ====================
+function openModal(id) {
+  if (!checkLogin()) return;
+  editingId = id || null;
+  tempInterviews = [];
+  var m = document.getElementById('modal');
+  if (!m) return;
+  var titleEl = document.getElementById('modalTitle');
+  if (titleEl) titleEl.textContent = id ? '编辑投递记录' : '新增投递记录';
+
+  function setVal(elId, val) { var el = document.getElementById(elId); if (el) el.value = val; }
+
+  if (id) {
+    var r = null;
+    for (var i=0; i<DATA.records.length; i++) { if (DATA.records[i].id === id) { r = DATA.records[i]; break; } }
+    if (!r) return;
+    setVal('fCompany', r.company||'');
+    setVal('fPosition', r.position||'');
+    setVal('fCity', r.city||'');
+    setVal('fChannel', r.channel||'BOSS直聘');
+    setVal('fDate', r.date||'');
+    setVal('fPrelimStatus', r.prelimStatus||'pending');
+    setVal('fProgressStatus', r.progressStatus||'');
+    setVal('fSalary', r.salary||'');
+    setVal('fContact', r.contact||'');
+    setVal('fLink', r.link||'');
+    setVal('fNote', r.note||'');
+    tempInterviews = (r.interviews||[]).map(function(x) { return {date:x.date, round:x.round, interviewer:x.interviewer, summary:x.summary}; });
+  } else {
+    setVal('fCompany', '');
+    setVal('fPosition', '');
+    setVal('fCity', '');
+    setVal('fChannel', 'BOSS直聘');
+    setVal('fDate', new Date().toISOString().slice(0,10));
+    setVal('fPrelimStatus', 'applied');
+    setVal('fProgressStatus', '');
+    setVal('fSalary', '');
+    setVal('fContact', '');
+    setVal('fLink', '');
+    setVal('fNote', '');
+  }
+  renderInterviewLog();
+  m.classList.add('show');
+}
+
+function closeModal() {
+  var m = document.getElementById('modal');
+  if (m) m.classList.remove('show');
+  editingId = null;
+  tempInterviews = [];
+}
+
+function renderInterviewLog() {
+  var wrap = document.getElementById('interviewLog');
+  if (!wrap) return;
+  if (tempInterviews.length === 0) {
+    wrap.innerHTML = '<div style="color:var(--text-light);font-size:12px;padding:8px 0">暂无面试记录，点击下方按钮添加</div>';
+    return;
+  }
+  var html = '';
+  for (var idx=0; idx<tempInterviews.length; idx++) {
+    var iv = tempInterviews[idx];
+    html += '<div class="interview-entry">';
+    html += '<div class="interview-entry-head">';
+    html += '<strong>第'+(idx+1)+'轮 · <input type="text" value="'+(iv.round||'')+'" placeholder="如：一面" style="border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;width:100px" onchange="tempInterviews['+idx+'].round=this.value"></strong>';
+    html += '<button class="icon-btn del" onclick="tempInterviews.splice('+idx+',1);renderInterviewLog()">🗑</button>';
+    html += '</div>';
+    // Row 1: date + interviewer
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">';
+    html += '<input type="date" value="'+(iv.date||'')+'" style="border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12px" onchange="tempInterviews['+idx+'].date=this.value">';
+    html += '<input type="text" value="'+(iv.interviewer||'')+'" placeholder="面试官" style="border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12px" onchange="tempInterviews['+idx+'].interviewer=this.value">';
+    html += '</div>';
+    // Row 2: method + duration
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">';
+    html += '<select style="border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12px;color:var(--text)" onchange="tempInterviews['+idx+'].method=this.value"><option value="">面试方式</option><option'+(iv.method==='线下面试'?' selected':'')+'>线下面试</option><option'+(iv.method==='视频面试'?' selected':'')+'>视频面试</option><option'+(iv.method==='电话面试'?' selected':'')+'>电话面试</option></select>';
+    html += '<select style="border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12px;color:var(--text)" onchange="tempInterviews['+idx+'].result=this.value"><option value="">面试结果</option><option'+(iv.result==='通过'?' selected':'')+'>通过</option><option'+(iv.result==='待定'?' selected':'')+'>待定</option><option'+(iv.result==='未通过'?' selected':'')+'>未通过</option></select>';
+    html += '</div>';
+    // Tech points
+    html += '<textarea placeholder="技术考察点 / 面试问题..." style="width:100%;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12px;min-height:40px;resize:vertical;font-family:inherit;margin-bottom:6px" onchange="tempInterviews['+idx+'].techPoints=this.value">'+(iv.techPoints||'')+'</textarea>';
+    // Summary
+    html += '<textarea placeholder="面试总结..." style="width:100%;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12px;min-height:50px;resize:vertical;font-family:inherit;margin-bottom:6px" onchange="tempInterviews['+idx+'].summary=this.value">'+(iv.summary||'')+'</textarea>';
+    // Self eval
+    html += '<textarea placeholder="自我评价..." style="width:100%;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12px;min-height:40px;resize:vertical;font-family:inherit" onchange="tempInterviews['+idx+'].selfEval=this.value">'+(iv.selfEval||'')+'</textarea>';
+    html += '</div>';
+  }
+  wrap.innerHTML = html;
+}
+
+function saveRecord() {
+  if (!checkLogin()) return;
+  var companyEl = document.getElementById('fCompany');
+  var positionEl = document.getElementById('fPosition');
+  var dateEl = document.getElementById('fDate');
+  var company = companyEl ? companyEl.value.trim() : '';
+  var position = positionEl ? positionEl.value.trim() : '';
+  var date = dateEl ? dateEl.value : '';
+  if (!company) { toast('请填写公司名称'); return; }
+  if (!position) { toast('请填写职位名称'); return; }
+  if (!date) { toast('请选择投递日期'); return; }
+
+  var gv = function(id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  var gvRaw = function(id) { var el = document.getElementById(id); return el ? el.value : ''; };
+
+  var rec = {
+    id: editingId || uid(),
+    company: company,
+    position: position,
+    city: gv('fCity'),
+    channel: gvRaw('fChannel'),
+    date: date,
+    prelimStatus: gvRaw('fPrelimStatus') || 'applied',
+    progressStatus: gvRaw('fProgressStatus') || '',
+    salary: gv('fSalary'),
+    contact: gv('fContact'),
+    link: gv('fLink'),
+    note: gv('fNote'),
+    interviews: []
+  };
+  for (var i=0; i<tempInterviews.length; i++) {
+    var iv = tempInterviews[i];
+    if (iv.date || iv.summary || iv.round) {
+      rec.interviews.push({
+        date: iv.date, round: iv.round, method: iv.method||'', duration: iv.duration||'',
+        interviewer: iv.interviewer||'', result: iv.result||'',
+        techPoints: iv.techPoints||'', summary: iv.summary||'', selfEval: iv.selfEval||''
+      });
+    }
+  }
+
+  if (editingId) {
+    for (var i=0; i<DATA.records.length; i++) {
+      if (DATA.records[i].id === editingId) { DATA.records[i] = rec; break; }
+    }
+  } else {
+    DATA.records.push(rec);
+  }
+  saveData();
+  closeModal();
+  renderAll();
+  toast(editingId ? '记录已更新' : '投递记录已添加');
+}
+
+function deleteRecord(id) {
+  if (!checkLogin()) return;
+  if (!confirm('确定删除这条投递记录吗？此操作不可恢复。')) return;
+  var newRecords = [];
+  for (var i=0; i<DATA.records.length; i++) {
+    if (DATA.records[i].id !== id) newRecords.push(DATA.records[i]);
+  }
+  DATA.records = newRecords;
+  saveData();
+  renderAll();
+  toast('记录已删除');
+}
+
+// ==================== Quick Interview ====================
+function openQuickInterview() {
+  if (!checkLogin()) return;
+  if (DATA.records.length === 0) {
+    toast('请先新增一条投递记录');
+    openModal();
+    return;
+  }
+  var sel = document.getElementById('qCompany');
+  if (!sel) return;
+  sel.innerHTML = '';
+  for (var i=0; i<DATA.records.length; i++) {
+    sel.innerHTML += '<option value="'+DATA.records[i].id+'">'+DATA.records[i].company+' · '+(DATA.records[i].position||'')+'</option>';
+  }
+  var dateEl = document.getElementById('qDate');
+  if (dateEl) dateEl.value = new Date().toISOString().slice(0,10);
+  var roundEl = document.getElementById('qRound');
+  if (roundEl) roundEl.value = '一面';
+  var methodEl = document.getElementById('qMethod');
+  if (methodEl) methodEl.value = '';
+  var durationEl = document.getElementById('qDuration');
+  if (durationEl) durationEl.value = '';
+  var interviewerEl = document.getElementById('qInterviewer');
+  if (interviewerEl) interviewerEl.value = '';
+  var resultEl = document.getElementById('qResult');
+  if (resultEl) resultEl.value = '';
+  var techEl = document.getElementById('qTechPoints');
+  if (techEl) techEl.value = '';
+  var summaryEl = document.getElementById('qSummary');
+  if (summaryEl) summaryEl.value = '';
+  var selfEvalEl = document.getElementById('qSelfEval');
+  if (selfEvalEl) selfEvalEl.value = '';
+  var qm = document.getElementById('quickModal');
+  if (qm) qm.classList.add('show');
+}
+
+function closeQuickModal() {
+  var qm = document.getElementById('quickModal');
+  if (qm) qm.classList.remove('show');
+}
+
+function saveQuickInterview() {
+  if (!checkLogin()) return;
+  var recordIdEl = document.getElementById('qCompany');
+  var dateEl = document.getElementById('qDate');
+  var recordId = recordIdEl ? recordIdEl.value : '';
+  var date = dateEl ? dateEl.value : '';
+  if (!recordId) { toast('请选择公司'); return; }
+  if (!date) { toast('请选择面试日期'); return; }
+
+  var record = null;
+  for (var i=0; i<DATA.records.length; i++) {
+    if (DATA.records[i].id === recordId) { record = DATA.records[i]; break; }
+  }
+  if (!record) return;
+  if (!record.interviews) record.interviews = [];
+
+  var roundEl = document.getElementById('qRound');
+  var interviewerEl = document.getElementById('qInterviewer');
+  var summaryEl = document.getElementById('qSummary');
+  var methodEl = document.getElementById('qMethod');
+  var durationEl = document.getElementById('qDuration');
+  var resultEl = document.getElementById('qResult');
+  var techEl = document.getElementById('qTechPoints');
+  var selfEvalEl = document.getElementById('qSelfEval');
+
+  record.interviews.push({
+    date: date,
+    round: roundEl ? roundEl.value : '',
+    method: methodEl ? methodEl.value : '',
+    duration: durationEl ? durationEl.value : '',
+    interviewer: interviewerEl ? interviewerEl.value.trim() : '',
+    result: resultEl ? resultEl.value : '',
+    techPoints: techEl ? techEl.value.trim() : '',
+    summary: summaryEl ? summaryEl.value.trim() : '',
+    selfEval: selfEvalEl ? selfEvalEl.value.trim() : ''
+  });
+
+  // Auto-promote to screening_pass + appropriate progressStatus
+  if (!record.prelimStatus || record.prelimStatus === 'pending' || record.prelimStatus === 'applied' || record.prelimStatus === 'screening') {
+    record.prelimStatus = 'screening_pass';
+  }
+  // Set progressStatus based on round
+  var round = roundEl ? roundEl.value : '';
+  if (!record.progressStatus) {
+    if (round === '一面') record.progressStatus = 'round1';
+    else if (round === '二面') record.progressStatus = 'round2';
+    else if (round === '三面' || round === '终面') record.progressStatus = 'final_round';
+    else if (round === 'AI面试') record.progressStatus = 'ai_interview';
+    else record.progressStatus = 'round1';
+  }
+  saveData();
+  closeQuickModal();
+  renderAll();
+  toast('面试记录已保存');
+}
+
+// ==================== Dashboard Toggle Events ====================
+var dashToggles = document.querySelectorAll('.dash-toggle');
+for (var di = 0; di < dashToggles.length; di++) {
+  (function(btn) {
+    btn.addEventListener('click', function() {
+      var section = btn.getAttribute('data-dash');
+      if (section === 'all') {
+        // Toggle all sections on/off
+        var anyOff = false;
+        for (var j = 0; j < dashToggles.length; j++) {
+          if (dashToggles[j].getAttribute('data-dash') !== 'all' && !dashToggles[j].classList.contains('active')) { anyOff = true; break; }
+        }
+        if (anyOff) {
+          // Turn all on
+          for (var j = 0; j < dashToggles.length; j++) { dashToggles[j].classList.add('active'); }
+          for (var j = 0; j < dashToggles.length; j++) {
+            var ds = dashToggles[j].getAttribute('data-dash');
+            var secEl = document.getElementById('dash-'+ds);
+            if (secEl) secEl.classList.add('open');
+          }
+          DATA.settings.dashSections = ['records','interviews','stats','timeline'];
+        } else {
+          // Turn all off (keep nothing except the toggle itself)
+          for (var j = 0; j < dashToggles.length; j++) { dashToggles[j].classList.remove('active'); }
+          for (var j = 0; j < dashToggles.length; j++) {
+            var ds = dashToggles[j].getAttribute('data-dash');
+            var secEl = document.getElementById('dash-'+ds);
+            if (secEl) secEl.classList.remove('open');
+          }
+          DATA.settings.dashSections = [];
+        }
+      } else {
+        btn.classList.toggle('active');
+        var secEl = document.getElementById('dash-'+section);
+        if (secEl) secEl.classList.toggle('open');
+        // Update settings
+        var newSections = [];
+        for (var j = 0; j < dashToggles.length; j++) {
+          var ds = dashToggles[j].getAttribute('data-dash');
+          if (ds !== 'all' && dashToggles[j].classList.contains('active')) { newSections.push(ds); }
+        }
+        DATA.settings.dashSections = newSections;
+      }
+      saveData();
+      renderDashboardSections();
+    });
+  })(dashToggles[di]);
+}
+
+function syncDashToggles() {
+  // Sync toggle buttons and section visibility with saved settings
+  var sections = getActiveDashSections();
+  var allOn = sections.length === 4;
+  for (var j = 0; j < dashToggles.length; j++) {
+    var ds = dashToggles[j].getAttribute('data-dash');
+    if (ds === 'all') {
+      if (allOn) dashToggles[j].classList.add('active');
+      else dashToggles[j].classList.remove('active');
+    } else {
+      var isOn = sections.indexOf(ds) !== -1;
+      if (isOn) dashToggles[j].classList.add('active');
+      else dashToggles[j].classList.remove('active');
+      var secEl = document.getElementById('dash-'+ds);
+      if (secEl) {
+        if (isOn) secEl.classList.add('open'); else secEl.classList.remove('open');
+      }
+    }
+  }
+}
+
+// ==================== Export ====================
+function exportData() {
+  // Build CSV with BOM for Excel compatibility
+  var BOM = '\uFEFF';
+  var headers = ['公司名称','职位名称','城市','投递渠道','投递日期','初步状态','具体进展','薪资范围','HR联系方式','JD链接','面试轮数','面试详情','备注'];
+  var rows = [headers.join(',')];
+
+  for (var i = 0; i < DATA.records.length; i++) {
+    var r = DATA.records[i];
+    var pi = getPrelimInfo(r.prelimStatus || '');
+    var gi = getProgressInfo(r.progressStatus || '');
+    var ivCount = r.interviews ? r.interviews.length : 0;
+    var ivDetail = '';
+    if (r.interviews && r.interviews.length) {
+      var parts = [];
+      for (var j = 0; j < r.interviews.length; j++) {
+        var iv = r.interviews[j];
+        var item = (iv.round || ('第'+(j+1)+'轮'));
+        if (iv.date) item += '(' + iv.date + ')';
+        if (iv.result) item += '[' + iv.result + ']';
+        if (iv.method) item += '-' + iv.method;
+        if (iv.interviewer) item += ' 面试官:' + iv.interviewer;
+        if (iv.techPoints) item += ' 考点:' + iv.techPoints;
+        parts.push(item);
+      }
+      ivDetail = parts.join(' | ');
+    }
+
+    var row = [
+      csvEscape(r.company || ''),
+      csvEscape(r.position || ''),
+      csvEscape(r.city || ''),
+      csvEscape(r.channel || ''),
+      csvEscape(r.date || ''),
+      csvEscape(pi.label),
+      csvEscape(gi.label),
+      csvEscape(r.salary || ''),
+      csvEscape(r.contact || ''),
+      csvEscape(r.link || ''),
+      String(ivCount),
+      csvEscape(ivDetail),
+      csvEscape(r.note || '')
+    ];
+    rows.push(row.join(','));
+  }
+
+  var csv = BOM + rows.join('\n');
+  var blob = new Blob([csv], { type: 'application/vnd.ms-excel;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = '求职投递记录_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('投递记录已导出为Excel');
+}
+
+function csvEscape(str) {
+  if (!str) return '';
+  var s = String(str);
+  // Escape double quotes and wrap in quotes if contains comma, quote, or newline
+  if (s.indexOf(',') !== -1 || s.indexOf('"') !== -1 || s.indexOf('\n') !== -1 || s.indexOf('\r') !== -1) {
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
+  return s;
+}
+
+// ==================== Toast ====================
+var toastTimer = null;
+function toast(msg) {
+  var t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() { t.classList.remove('show'); }, 2200);
+}
+
+// ==================== Events ====================
+function bindEvent(id, event, fn) {
+  var el = document.getElementById(id);
+  if (el) { el.addEventListener(event, fn); }
+  else { console.warn('未找到元素:', id); }
+}
+
+// Quick action cards
+var quickAdd = document.getElementById('quickAdd');
+if (quickAdd) quickAdd.addEventListener('click', function() { openModal(); });
+var quickInterview = document.getElementById('quickInterview');
+if (quickInterview) quickInterview.addEventListener('click', function() { openQuickInterview(); });
+
+// Main buttons
+bindEvent('addBtn', 'click', function() { openModal(); });
+bindEvent('addInterviewPageBtn', 'click', function() { openQuickInterview(); });
+bindEvent('addInterviewRecordBtn', 'click', function() { openQuickInterview(); });
+bindEvent('exportBtn', 'click', exportData);
+
+// Modal buttons
+bindEvent('modalClose', 'click', closeModal);
+bindEvent('cancelBtn', 'click', closeModal);
+bindEvent('saveBtn', 'click', saveRecord);
+bindEvent('addInterviewBtn', 'click', function() {
+  tempInterviews.push({ date: new Date().toISOString().slice(0,10), round: '', interviewer: '', summary: '' });
+  renderInterviewLog();
+});
+
+// Filter events
+bindEvent('searchInput', 'input', renderRecords);
+bindEvent('filterPrelimStatus', 'change', renderRecords);
+bindEvent('filterProgressStatus', 'change', renderRecords);
+bindEvent('filterChannel', 'change', renderRecords);
+
+// Modal overlay click to close
+var modalOverlay = document.getElementById('modal');
+if (modalOverlay) {
+  modalOverlay.addEventListener('click', function(e) {
+    if (e.target.id === 'modal') closeModal();
+  });
+}
+
+// Quick modal events
+bindEvent('quickModalClose', 'click', closeQuickModal);
+bindEvent('quickCancelBtn', 'click', closeQuickModal);
+bindEvent('quickSaveBtn', 'click', saveQuickInterview);
+var quickOverlay = document.getElementById('quickModal');
+if (quickOverlay) {
+  quickOverlay.addEventListener('click', function(e) {
+    if (e.target.id === 'quickModal') closeQuickModal();
+  });
+}
+
+// Keyboard
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') { closeModal(); closeQuickModal(); }
+});
+
+// ==================== Init ====================
+console.log('开始初始化...');
+// Check saved login state (now handled in loadData)
+fillSelects();
+setTodayDate();
+loadData(function() {
+  updateLoginUI();
+  syncDashToggles();
+  renderAll();
+  console.log('初始化完成！云端状态: ' + (SYNC_MODE ? '已连接 Supabase' : '离线-本地存储'));
+});
+</script>
+
+<!-- Login Modal -->
+<!-- Contact Modal -->
+<div id="contactOverlay" style="display:none" class="contact-overlay">
+  <div class="contact-box">
+    <button class="contact-close" id="contactClose">&times;</button>
+    <h3>联系我</h3>
+    <div class="contact-sub">发送邮件到 yadonzhao@gmail.com</div>
+    <form id="contactForm">
+      <input type="text" name="from_name" id="contactName" placeholder="您的姓名" required>
+      <input type="email" name="reply_to" id="contactEmail" placeholder="您的邮箱" required>
+      <input type="text" name="subject" id="contactSubject" placeholder="主题（可选）">
+      <textarea name="message" id="contactMsg" placeholder="消息内容" required></textarea>
+      <button type="submit" class="contact-btn" id="contactSubmit">发送消息</button>
+    </form>
+    <div class="contact-err" id="contactErr"></div>
+    <div class="contact-ok" id="contactOk"></div>
+  </div>
+</div>
+
+<!-- Admin Panel -->
+<div id="adminOverlay" style="display:none" class="admin-overlay">
+  <div class="admin-box">
+    <button class="admin-close" id="adminClose">&times;</button>
+    <h3>账号管理</h3>
+    <div class="admin-sub">创建和查看访问账号</div>
+    
+    <div class="admin-section">
+      <h4>创建新账号</h4>
+      <div class="admin-create-row">
+        <input type="text" id="newUsername" placeholder="用户名">
+        <input type="password" id="newPassword" placeholder="密码">
+        <select id="newRole">
+          <option value="user">用户</option>
+          <option value="admin">管理员</option>
+        </select>
+        <button id="createAccountBtn">创建</button>
+      </div>
+      <div class="admin-msg" id="createMsg"></div>
+    </div>
+    
+    <div class="admin-section">
+      <h4>已有账号</h4>
+      <div id="accountTableWrap">
+        <table class="admin-table">
+          <thead><tr><th>用户名</th><th>密码</th><th>角色</th><th>创建时间</th><th>操作</th></tr></thead>
+          <tbody id="accountTableBody">
+            <tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:16px">加载中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <div class="admin-reset-modal" id="resetPwdModal" style="display:none">
+      <p>重置 <strong id="resetTargetUser"></strong> 的密码：</p>
+      <div class="admin-reset-row">
+        <input type="text" id="resetNewPwd" placeholder="新密码（至少6位）">
+        <button class="confirm" id="resetPwdConfirm">确认重置</button>
+        <button class="cancel" id="resetPwdCancel">取消</button>
+      </div>
+      <div class="admin-msg" id="resetPwdMsg"></div>
+    </div>
+  </div>
+</div>
+
+<div id="loginOverlay" style="display:none" class="login-overlay">
+  <div class="login-box">
+    <button class="login-close" id="loginClose">&times;</button>
+    <h3>登录</h3>
+    <div class="login-sub">请输入账号密码以编辑和查看个人数据</div>
+    <input type="text" id="loginUser" placeholder="账号" autocomplete="username">
+    <input type="password" id="loginPass" placeholder="密码" autocomplete="current-password">
+    <button class="login-btn" id="loginSubmit">登 录</button>
+    <div class="login-err" id="loginErr"></div>
+    <div class="login-ok" id="loginOk" style="color:var(--success);font-size:13px;margin-top:4px;min-height:18px;font-weight:500"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  // ==================== Admin Panel ====================
+  var adminBtn = document.getElementById('adminBtn');
+  var adminOverlay = document.getElementById('adminOverlay');
+  var adminClose = document.getElementById('adminClose');
+  var createAccountBtn = document.getElementById('createAccountBtn');
+  var newUsername = document.getElementById('newUsername');
+  var newPassword = document.getElementById('newPassword');
+  var createMsg = document.getElementById('createMsg');
+  var accountTableBody = document.getElementById('accountTableBody');
+
+  var newRole = document.getElementById('newRole');
+  var resetPwdModal = document.getElementById('resetPwdModal');
+  var resetTargetUser = document.getElementById('resetTargetUser');
+  var resetNewPwd = document.getElementById('resetNewPwd');
+  var resetPwdMsg = document.getElementById('resetPwdMsg');
+  var resetPwdConfirm = document.getElementById('resetPwdConfirm');
+  var resetPwdCancel = document.getElementById('resetPwdCancel');
+  var resettingUserId = null;
+
+  function openAdmin() {
+    adminOverlay.style.display = 'flex';
+    createMsg.textContent = '';
+    resetPwdModal.style.display = 'none';
+    resetPwdMsg.textContent = '';
+    loadAccounts();
+  }
+
+  function closeAdmin() {
+    adminOverlay.style.display = 'none';
+  }
+
+  async function loadAccounts() {
+    accountTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:16px">加载中...</td></tr>';
+    try {
+      var res = await fetch(SUPA_ACCOUNTS + '?select=id,username,password,plain_password,role,created_at&order=created_at.desc', {
+        headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
+      });
+      if (!res.ok) throw new Error('Fetch failed');
+      var rows = await res.json();
+      if (rows.length === 0) {
+        accountTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:16px">暂无账号</td></tr>';
+        return;
+      }
+      accountTableBody.innerHTML = rows.map(function(r) {
+        var d = r.created_at ? r.created_at.slice(0,10) : '-';
+        var roleClass = 'role-' + r.role;
+        var roleOpts = '<option value="user"'+(r.role==='user'?' selected':'')+'>用户</option><option value="admin"'+(r.role==='admin'?' selected':'')+'>管理员</option>';
+        var plainPwd = r.plain_password || '(旧账号，无明文记录)';
+        return '<tr data-uid="'+r.id+'">'+
+          '<td><strong>'+r.username+'</strong></td>'+
+          '<td><div class="admin-pwd-cell">'+
+            '<span class="pwd-dots" id="pwdDots_'+r.id+'">••••••••</span>'+
+            '<span class="pwd-text" id="pwdHash_'+r.id+'" style="display:none">'+plainPwd+'</span>'+
+            '<button onclick="togglePwdView(\''+r.id+'\')" title="查看/隐藏密码">👁</button>'+
+          '</div></td>'+
+          '<td><select class="admin-role-select '+roleClass+'" onchange="updateRole('+r.id+',this.value,\''+r.username+'\')">'+roleOpts+'</select></td>'+
+          '<td>'+d+'</td>'+
+          '<td>'+
+            '<button class="admin-action-btn reset" onclick="showResetPwd('+r.id+',\''+r.username+'\')">重置密码</button>'+
+            '<button class="admin-action-btn delete" onclick="deleteAccount('+r.id+',\''+r.username+'\')">删除</button>'+
+          '</td></tr>';
+      }).join('');
+    } catch(e) {
+      accountTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--danger);padding:16px">加载失败: ' + e.message + '</td></tr>';
+    }
+  }
+
+  window.togglePwdView = function(uid) {
+    var dots = document.getElementById('pwdDots_'+uid);
+    var hash = document.getElementById('pwdHash_'+uid);
+    if (dots && hash) {
+      if (dots.style.display === 'none') {
+        dots.style.display = '';
+        hash.style.display = 'none';
+      } else {
+        dots.style.display = 'none';
+        hash.style.display = '';
+      }
+    }
+  };
+
+  window.showResetPwd = function(uid, uname) {
+    resettingUserId = uid;
+    resetTargetUser.textContent = uname;
+    resetNewPwd.value = '';
+    resetPwdMsg.textContent = '';
+    resetPwdMsg.className = 'admin-msg';
+    resetPwdModal.style.display = '';
+  };
+
+  async function doResetPwd() {
+    var newPwd = resetNewPwd.value.trim();
+    if (!newPwd || newPwd.length < 6) {
+      resetPwdMsg.textContent = '密码至少6位';
+      resetPwdMsg.className = 'admin-msg error';
+      return;
+    }
+    if (!/^[a-zA-Z0-9]+$/.test(newPwd)) {
+      resetPwdMsg.textContent = '密码仅能包含数字和字母，不能包含特殊字符';
+      resetPwdMsg.className = 'admin-msg error';
+      return;
+    }
+    resetPwdConfirm.disabled = true;
+    resetPwdConfirm.textContent = '重置中...';
+    try {
+      var hash = await sha256(newPwd);
+      var res = await fetch(SUPA_ACCOUNTS + '?id=eq.' + resettingUserId, {
+        method: 'PATCH',
+        headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: hash, plain_password: newPwd })
+      });
+      if (!res.ok) throw new Error('更新失败');
+      resetPwdMsg.textContent = '密码重置成功！';
+      resetPwdMsg.className = 'admin-msg success';
+      resetNewPwd.value = '';
+      resettingUserId = null;
+      loadAccounts();
+    } catch(e) {
+      resetPwdMsg.textContent = '重置失败: ' + e.message;
+      resetPwdMsg.className = 'admin-msg error';
+    }
+    resetPwdConfirm.disabled = false;
+    resetPwdConfirm.textContent = '确认重置';
+  }
+
+  window.updateRole = async function(uid, newRole, uname) {
+    try {
+      var res = await fetch(SUPA_ACCOUNTS + '?id=eq.' + uid, {
+        method: 'PATCH',
+        headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: newRole })
+      });
+      if (!res.ok) throw new Error('更新失败');
+      createMsg.textContent = uname + ' 角色已更新为 ' + (newRole==='admin'?'管理员':'用户');
+      createMsg.className = 'admin-msg success';
+    } catch(e) {
+      createMsg.textContent = '角色更新失败: ' + e.message;
+      createMsg.className = 'admin-msg error';
+      loadAccounts();
+    }
+  };
+
+  window.deleteAccount = async function(uid, uname) {
+    if (!confirm('确定要删除账号「'+uname+'」吗？该操作不可撤销。')) return;
+    try {
+      var res = await fetch(SUPA_ACCOUNTS + '?id=eq.' + uid, {
+        method: 'DELETE',
+        headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
+      });
+      if (!res.ok) throw new Error('删除失败');
+      createMsg.textContent = '账号 ' + uname + ' 已删除';
+      createMsg.className = 'admin-msg success';
+      loadAccounts();
+    } catch(e) {
+      createMsg.textContent = '删除失败: ' + e.message;
+      createMsg.className = 'admin-msg error';
+    }
+  };
+
+  async function createAccount() {
+    var uname = newUsername.value.trim();
+    var upass = newPassword.value;
+    var urole = newRole.value;
+    createMsg.textContent = '';
+    createMsg.className = 'admin-msg';
+
+    if (!uname || !upass) {
+      createMsg.textContent = '请输入用户名和密码';
+      createMsg.className = 'admin-msg error';
+      return;
+    }
+    if (!/^\d{6,}$/.test(uname)) {
+      createMsg.textContent = '用户名必须为至少6位纯数字';
+      createMsg.className = 'admin-msg error';
+      return;
+    }
+    if (upass.length < 6) {
+      createMsg.textContent = '密码至少6位';
+      createMsg.className = 'admin-msg error';
+      return;
+    }
+    if (!/^[a-zA-Z0-9]+$/.test(upass)) {
+      createMsg.textContent = '密码仅能包含数字和字母，不能包含特殊字符';
+      createMsg.className = 'admin-msg error';
+      return;
+    }
+
+    createAccountBtn.disabled = true;
+    createAccountBtn.textContent = '创建中...';
+
+    try {
+      var hash = await sha256(upass);
+      var res = await fetch(SUPA_ACCOUNTS, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPA_KEY,
+          'Authorization': 'Bearer ' + SUPA_KEY,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=representation'
+        },
+        body: JSON.stringify({ username: uname, password: hash, plain_password: upass, role: urole })
+      });
+      if (!res.ok) {
+        var errData = await res.json();
+        throw new Error(errData.message || '创建失败');
+      }
+      createMsg.textContent = '账号 ' + uname + '（' + (urole==='admin'?'管理员':'用户') + '）创建成功！';
+      createMsg.className = 'admin-msg success';
+      newUsername.value = '';
+      newPassword.value = '';
+      loadAccounts();
+    } catch(e) {
+      createMsg.textContent = '创建失败: ' + e.message;
+      createMsg.className = 'admin-msg error';
+    }
+
+    createAccountBtn.disabled = false;
+    createAccountBtn.textContent = '创建';
+  }
+
+  if (adminBtn) adminBtn.addEventListener('click', openAdmin);
+  if (adminClose) adminClose.addEventListener('click', closeAdmin);
+  if (adminOverlay) {
+    adminOverlay.addEventListener('click', function(e) { if (e.target.id === 'adminOverlay') closeAdmin(); });
+  }
+  if (createAccountBtn) createAccountBtn.addEventListener('click', createAccount);
+  if (resetPwdConfirm) resetPwdConfirm.addEventListener('click', doResetPwd);
+  if (resetPwdCancel) resetPwdCancel.addEventListener('click', function() { resetPwdModal.style.display = 'none'; resettingUserId = null; });
+
+  // ==================== Login bindings ====================
+  var loginBtn = document.getElementById('loginBtn');
+  if (loginBtn) loginBtn.addEventListener('click', function() { if (currentUser) { doLogout(); } else { showLogin(); } });
+  
+  var loginClose = document.getElementById('loginClose');
+  if (loginClose) loginClose.addEventListener('click', closeLogin);
+  
+  var loginSubmit = document.getElementById('loginSubmit');
+  if (loginSubmit) loginSubmit.addEventListener('click', doLogin);
+  
+  var loginPass = document.getElementById('loginPass');
+  if (loginPass) loginPass.addEventListener('keydown', function(e) { if (e.key === 'Enter') doLogin(); });
+  
+  var loginOverlay = document.getElementById('loginOverlay');
+  if (loginOverlay) {
+    loginOverlay.addEventListener('click', function(e) { if (e.target.id === 'loginOverlay') closeLogin(); });
+  }
+})();
+</script>
+
+<script>
+(function() {
+  // Init EmailJS
+  emailjs.init('cqjFAYnF0jRE2LvyE');
+
+  // Contact form
+  var contactBtn = document.getElementById('contactBtn');
+  var contactOverlay = document.getElementById('contactOverlay');
+  var contactClose = document.getElementById('contactClose');
+  var contactForm = document.getElementById('contactForm');
+  var contactSubmit = document.getElementById('contactSubmit');
+  var contactErr = document.getElementById('contactErr');
+  var contactOk = document.getElementById('contactOk');
+
+  function showContact() {
+    contactOverlay.style.display = 'flex';
+    document.getElementById('contactName').focus();
+    contactErr.textContent = '';
+    contactOk.textContent = '';
+    contactSubmit.disabled = false;
+    contactSubmit.textContent = '发送消息';
+  }
+
+  function closeContact() {
+    contactOverlay.style.display = 'none';
+    contactForm.reset();
+    contactErr.textContent = '';
+    contactOk.textContent = '';
+  }
+
+  if (contactBtn) contactBtn.addEventListener('click', showContact);
+  if (contactClose) contactClose.addEventListener('click', closeContact);
+  if (contactOverlay) {
+    contactOverlay.addEventListener('click', function(e) {
+      if (e.target.id === 'contactOverlay') closeContact();
+    });
+  }
+
+  if (contactForm) {
+    contactForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      var btn = contactSubmit;
+      btn.disabled = true;
+      btn.textContent = '发送中...';
+      contactErr.textContent = '';
+      contactOk.textContent = '';
+
+      emailjs.sendForm('service_412hekb', 'template_t0oa0tk', contactForm)
+        .then(function() {
+          contactOk.textContent = '消息已发送成功，我会尽快回复！';
+          contactForm.reset();
+          setTimeout(closeContact, 2500);
+        })
+        .catch(function(err) {
+          btn.disabled = false;
+          btn.textContent = '发送消息';
+          contactErr.textContent = '发送失败，请稍后重试或直接发邮件到 yadonzhao@gmail.com';
+          console.error('EmailJS error:', err);
+        });
+    });
+  }
+})();
+</script>
+
+</body>
+</html>
