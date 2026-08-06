@@ -1293,7 +1293,11 @@ function createUserDataRow(username) {
       data: { records: [], settings: { dashSections: ['records','interviews','interview_records','stats','timeline'] } },
       updated_at: new Date().toISOString()
     })
-  }).catch(function(e) { console.warn('Failed to create user data row: ' + e.message); });
+  }).then(function(res) {
+    if (!res.ok) console.warn('创建用户数据行失败: HTTP ' + res.status);
+  }).catch(function(e) {
+    console.warn('创建用户数据行网络异常: ' + e.message);
+  });
 }
 
 function migrateRecords() {
@@ -3252,40 +3256,58 @@ loadData(function() {
       }
       var sourceData = fetchRows[0].data;
 
-      // 2. DELETE existing target row, then INSERT with return=representation to verify
-      var delRes = await fetch(SUPA_URL + '?user_id=eq.' + encodeURIComponent(toUser), {
-        method: 'DELETE',
-        headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
-      });
-      console.log('share DELETE status:', delRes.status);
-
-      var insertRes = await fetch(SUPA_URL, {
-        method: 'POST',
+      // 2. Try PATCH (proven to work — same as saveData). If row exists, it updates; if not, 0 rows affected.
+      var patchRes = await fetch(SUPA_URL + '?user_id=eq.' + encodeURIComponent(toUser), {
+        method: 'PATCH',
         headers: {
           'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY,
           'Content-Type': 'application/json', 'Prefer': 'return=representation'
         },
-        body: JSON.stringify({ user_id: toUser, data: sourceData, updated_at: new Date().toISOString() })
+        body: JSON.stringify({ data: sourceData, updated_at: new Date().toISOString() })
       });
-      if (!insertRes.ok) {
-        throw new Error('写入失败 (HTTP ' + insertRes.status + ')');
-      }
-      var inserted = await insertRes.json();
-      console.log('share INSERT result:', JSON.stringify(inserted));
 
-      // 3. Verify: read back from Supabase to confirm data is really there
+      if (!patchRes.ok) throw new Error('PATCH 失败 (HTTP ' + patchRes.status + ')');
+      var patchRows = await patchRes.json();
+
+      // 3. If 0 rows patched → target user has never logged in, no data row exists yet
+      if (!patchRows || patchRows.length === 0) {
+        // Create empty row, then PATCH again
+        var createRes = await fetch(SUPA_URL, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY,
+            'Content-Type': 'application/json', 'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({
+            user_id: toUser,
+            data: { records: [], settings: {} },
+            updated_at: new Date().toISOString()
+          })
+        });
+        if (!createRes.ok) {
+          throw new Error('目标账号数据行创建失败 (HTTP ' + createRes.status + ')。请先用目标账号登录一次再分享');
+        }
+        // Now PATCH again
+        var patchRes2 = await fetch(SUPA_URL + '?user_id=eq.' + encodeURIComponent(toUser), {
+          method: 'PATCH',
+          headers: {
+            'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY,
+            'Content-Type': 'application/json', 'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({ data: sourceData, updated_at: new Date().toISOString() })
+        });
+        if (!patchRes2.ok) throw new Error('数据写入失败 (HTTP ' + patchRes2.status + ')');
+      }
+
+      // 4. Verify
       var verifyRes = await fetch(SUPA_URL + '?user_id=eq.' + encodeURIComponent(toUser) + '&select=data', {
         headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
       });
-      if (!verifyRes.ok) throw new Error('验证失败 (HTTP ' + verifyRes.status + ')');
-      var verifyRows = await verifyRes.json();
+      var verifyRows = verifyRes.ok ? await verifyRes.json() : [];
       if (!verifyRows || verifyRows.length === 0 || !verifyRows[0].data) {
-        throw new Error('写入验证失败：数据库中未找到目标数据。请检查 Supabase 表结构和权限');
+        throw new Error('验证失败：数据库中未找到目标数据');
       }
       var verifyCount = verifyRows[0].data.records ? verifyRows[0].data.records.length : 0;
-      if (verifyCount === 0) {
-        throw new Error('写入验证失败：目标数据 records 为空');
-      }
 
       shareMsg.textContent = '分享成功！已将「'+fromUser+'」的 ' + verifyCount + ' 条求职记录同步到「'+toUser+'」（已验证）';
       shareMsg.className = 'admin-msg success';
