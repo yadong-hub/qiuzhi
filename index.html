@@ -1159,7 +1159,10 @@ function updateLoginUI() {
     btn.textContent = currentUser.username;
     btn.className = 'login-link logged';
     btn.title = '点击退出登录';
-    if (adminBtn) adminBtn.style.display = (currentUser.role === 'admin') ? 'inline-block' : 'none';
+    // Show admin button if role is 'admin' OR username is 'admin' (fallback)
+    var isAdmin = (currentUser.role === 'admin') || (currentUser.username === 'admin');
+    if (adminBtn) adminBtn.style.display = isAdmin ? 'inline-block' : 'none';
+    console.log('updateLoginUI: username=' + currentUser.username + ', role=' + currentUser.role + ', isAdmin=' + isAdmin);
   } else {
     btn.textContent = '登录';
     btn.className = 'login-link';
