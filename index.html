@@ -123,6 +123,7 @@ tr:hover td { background:#f8fafc; }
 .s-resume-rejected { background:#fce7f3; color:#db2777; }
 
 .s-exam { background:#ede9fe; color:#7c3aed; }
+.s-assessment { background:#cffafe; color:#0891b2; }
 .s-ai-interview { background:#dbeafe; color:#2563eb; }
 .s-round1 { background:#ffedd5; color:#ea580c; }
 .s-round2 { background:#fef3c7; color:#d97706; }
@@ -132,6 +133,7 @@ tr:hover td { background:#f8fafc; }
 .s-offer-declined { background:#f1f5f9; color:#64748b; }
 .s-interview { background:#fef3c7; color:#d97706; }
 .s-rejected { background:#fee2e2; color:#dc2626; }
+.s-interview-rejected { background:#fee2e2; color:#dc2626; }
 
 /* Buttons */
 .btn {
@@ -150,7 +152,7 @@ tr:hover td { background:#f8fafc; }
 .actions { display:flex; gap:4px; }
 
 /* Modal */
-.modal-overlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(15,23,42,0.45); z-index:200; align-items:center; justify-content:center; }
+.modal-overlay { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(15,23,42,0.45); z-index:200; align-items:center; justify-content:center; padding:16px; overflow-y:auto; -webkit-overflow-scrolling:touch; }
 .modal-overlay.show { display:flex; }
 .modal {
   background:#fff; border-radius:16px; width:90%; max-width:640px; max-height:85vh; overflow-y:auto;
@@ -160,7 +162,7 @@ tr:hover td { background:#f8fafc; }
 .modal-title { font-weight:600; font-size:16px; }
 .modal-close { background:none; border:none; font-size:22px; cursor:pointer; color:var(--text-muted); padding:0 4px; }
 .modal-body { padding:20px 22px; }
-.modal-foot { padding:14px 22px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:10px; }
+.modal-foot { padding:14px 22px; padding-bottom: calc(14px + env(safe-area-inset-bottom)); border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:10px; }
 .form-group { margin-bottom:14px; }
 .form-group label { display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:5px; }
 .form-group input, .form-group select, .form-group textarea {
@@ -168,7 +170,7 @@ tr:hover td { background:#f8fafc; }
   font-size:13px; font-family:inherit; outline:none;
 }
 .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color:var(--primary); }
-.form-group textarea { resize:vertical; min-height:60px; }
+.form-group textarea { resize:vertical; min-height:60px; max-height:160px; overflow:auto; -webkit-overflow-scrolling:touch; }
 .form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
 .form-group.full { grid-column:1/-1; }
 
@@ -210,6 +212,15 @@ tr:hover td { background:#f8fafc; }
 .tc-company { font-weight:600; margin-bottom:2px; }
 .tc-role { font-size:13px; color:var(--text-muted); }
 .tc-note { font-size:12px; color:var(--text-light); margin-top:4px; white-space:pre-wrap; }
+
+/* Timeline grouped by company */
+.tl-group { background: var(--card); border:1px solid var(--border); border-radius:12px; margin-bottom:20px; overflow:hidden; }
+.tl-group-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:14px 16px; background:linear-gradient(135deg,#f8fafc,#eef2ff); border-bottom:1px solid var(--border); }
+.tl-group-company { font-size:15px; font-weight:700; color:var(--text); }
+.tl-group-meta { font-size:12px; color:var(--text-muted); margin-top:3px; }
+.tl-group-head-right { text-align:right; flex-shrink:0; }
+.tl-group-range { font-size:12px; color:var(--text-muted); margin-top:6px; }
+.tl-group-body { padding:14px 16px 4px; }
 
 /* Stats page */
 .stats-charts { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
@@ -589,7 +600,7 @@ tr:hover td { background:#f8fafc; }
   background: #f8fafc; color: var(--text);
 }
 .contact-box input:focus, .contact-box textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
-.contact-box textarea { resize: vertical; min-height: 90px; }
+.contact-box textarea { resize: vertical; min-height: 90px; max-height: 160px; overflow: auto; }
 .contact-box .contact-btn {
   width: 100%; padding: 12px; border-radius: 10px; border: none;
   background: var(--primary); color: #fff; font-size: 15px; font-weight: 600;
@@ -905,12 +916,16 @@ tr:hover td { background:#f8fafc; }
       <div class="form-row">
         <div class="form-group">
           <label>初步状态</label>
-          <select id="fPrelimStatus"></select>
+          <select id="fPrelimStatus" onchange="toggleRejectedDate()"></select>
         </div>
         <div class="form-group">
           <label>具体进展</label>
-          <select id="fProgressStatus"></select>
+          <select id="fProgressStatus" onchange="toggleRejectedDate()"></select>
         </div>
+      </div>
+      <div class="form-group" id="rejectedDateGroup" style="display:none">
+        <label>被拒日期</label>
+        <input type="date" id="fRejectedDate">
       </div>
       <div class="form-group">
         <label>HR 联系方式</label>
@@ -1081,10 +1096,12 @@ var PRELIM_STATUS_LIST = [
 var PROGRESS_STATUS_LIST = [
   { key:'', label:'— 暂无 —', cls:'' },
   { key:'exam', label:'笔试', cls:'s-exam' },
+  { key:'assessment', label:'测评', cls:'s-assessment' },
   { key:'ai_interview', label:'AI面试', cls:'s-ai-interview' },
   { key:'round1', label:'一轮面试', cls:'s-round1' },
   { key:'round2', label:'二轮面试', cls:'s-round2' },
   { key:'final_round', label:'终面', cls:'s-final-round' },
+  { key:'interview_rejected', label:'面试被拒', cls:'s-interview-rejected' },
   { key:'negotiate', label:'谈薪中', cls:'s-negotiate' },
   { key:'offer_accepted', label:'已接受offer', cls:'s-offer' },
   { key:'offer_declined', label:'已拒绝offer', cls:'s-offer-declined' }
@@ -1097,8 +1114,8 @@ var PRELIM_COLORS = {
 };
 
 var PROGRESS_COLORS = {
-  exam:'#7c3aed', ai_interview:'#2563eb', round1:'#ea580c', round2:'#d97706',
-  final_round:'#dc2626', negotiate:'#db2777', offer_accepted:'#16a34a', offer_declined:'#94a3b8'
+  exam:'#7c3aed', assessment:'#0891b2', ai_interview:'#2563eb', round1:'#ea580c', round2:'#d97706',
+  final_round:'#dc2626', interview_rejected:'#dc2626', negotiate:'#db2777', offer_accepted:'#16a34a', offer_declined:'#94a3b8'
 };
 
 var BAR_COLORS = ['#2563eb','#7c3aed','#0d9488','#16a34a','#d97706','#dc2626','#db2777','#3b82f6','#22c55e','#ea580c'];
@@ -1293,7 +1310,11 @@ function createUserDataRow(username) {
       data: { records: [], settings: { dashSections: ['records','interviews','interview_records','stats','timeline'] } },
       updated_at: new Date().toISOString()
     })
-  }).catch(function(e) { console.warn('Failed to create user data row: ' + e.message); });
+  }).then(function(res) {
+    if (!res.ok) console.warn('创建用户数据行失败: HTTP ' + res.status);
+  }).catch(function(e) {
+    console.warn('创建用户数据行网络异常: ' + e.message);
+  });
 }
 
 function migrateRecords() {
@@ -1619,7 +1640,7 @@ function renderDashboard() {
   var funnelStages = [
     { label:'已投递', check: function(s) { return s.prelimStatus==='applied'||s.prelimStatus==='screening'||s.prelimStatus==='screening_pass'||s.prelimStatus==='resume_rejected'||!!s.progressStatus; } },
     { label:'初筛通过', check: function(s) { return s.prelimStatus==='screening_pass'||!!s.progressStatus; } },
-    { label:'面试/流程中', check: function(s) { var p=s.progressStatus||''; return p==='exam'||p==='ai_interview'||p==='round1'||p==='round2'||p==='final_round'||p==='negotiate'||(s.interviews&&s.interviews.length>0); } },
+    { label:'面试/流程中', check: function(s) { var p=s.progressStatus||''; return p==='exam'||p==='assessment'||p==='ai_interview'||p==='round1'||p==='round2'||p==='final_round'||p==='negotiate'||(s.interviews&&s.interviews.length>0); } },
     { label:'已接受Offer', check: function(s) { return s.progressStatus==='offer_accepted'; } }
   ];
   var maxCount = 0;
@@ -1879,56 +1900,13 @@ function maxCnt(recs, field) {
 function renderDashTimeline() {
   var el = document.getElementById('dash-timeline');
   if (!el) return;
-  var recs = DATA.records.slice();
-  recs.sort(function(a,b) { return (b.date||'').localeCompare(a.date||''); });
-
-  // Build timeline events
-  var events = [];
-  for (var i = 0; i < recs.length; i++) {
-    var r = recs[i];
-    // Add application event
-    events.push({ date: r.date, type: 'apply', company: r.company, position: r.position, channel: r.channel, pi: getPrelimInfo(r.prelimStatus||''), gi: getProgressInfo(r.progressStatus||'') });
-    // Add interview events
-    if (r.interviews && r.interviews.length) {
-      for (var j = 0; j < r.interviews.length; j++) {
-        var iv = r.interviews[j];
-        events.push({ date: iv.date, type: 'interview', company: r.company, round: iv.round, result: iv.result, summary: iv.summary });
-      }
-    }
-  }
-  events.sort(function(a,b) { return (b.date||'').localeCompare(a.date||''); });
-
   var html = '<div class="card"><div class="card-head"><div class="card-title">时间线</div></div><div class="card-body">';
-  if (events.length === 0) {
+  if (!DATA.records || DATA.records.length === 0) {
     html += '<div class="empty-state"><div class="emoji">📅</div>暂无记录</div>';
   } else {
-    html += '<div class="timeline-wrap">';
-    var lastMonth = '';
-    for (var i = 0; i < events.length; i++) {
-      var ev = events[i];
-      if (!ev.date) continue;
-      var d = new Date(ev.date);
-      var mon = d.getFullYear()+'年'+(d.getMonth()+1)+'月';
-      if (mon !== lastMonth) {
-        lastMonth = mon;
-        html += '<div class="timeline-month">'+mon+'</div>';
-      }
-      html += '<div class="timeline-item">';
-      html += '<div class="timeline-dot" style="background:'+(ev.type==='interview'?'#7c3aed':'#2563eb')+'"></div>';
-      html += '<div class="timeline-content">';
-      html += '<div class="timeline-date">'+(d.getMonth()+1)+'月'+d.getDate()+'日</div>';
-      if (ev.type === 'interview') {
-        html += '<div><strong>'+maskCompany(ev.company)+'</strong> · '+(ev.round||'面试')+'</div>';
-        if (ev.result) html += '<div style="font-size:12px;color:#64748b">结果：'+ev.result+'</div>';
-        if (ev.summary) html += '<div style="font-size:12px;color:#64748b;margin-top:4px">'+maskDetail(ev.summary).substring(0,60)+(ev.summary.length>60?'…':'')+'</div>';
-      } else {
-        html += '<div><strong>'+maskCompany(ev.company)+'</strong> · '+maskPosition(ev.position)+'（'+ev.channel+'）</div>';
-        var st = ev.gi.key ? ev.gi.label : ev.pi.label;
-        html += '<div style="font-size:12px;color:#64748b">'+st+'</div>';
-      }
-      html += '</div></div>';
-    }
-    html += '</div>';
+    var bg = buildTimelineGroups();
+    if (bg.order.length === 0) html += '<div class="empty-state"><div class="emoji">📅</div>暂无记录</div>';
+    else bg.order.forEach(function(k){ html += renderTimelineGroupHtml(bg.groups[k]); });
   }
   html += '</div></div>';
   el.innerHTML = html;
@@ -2338,41 +2316,109 @@ function renderBarChart(elId, labels, countMap, colors) {
 }
 
 // ==================== Timeline ====================
+function buildTimelineGroups() {
+  var recs = DATA.records.slice();
+  var groups = {}; var order = [];
+  var REJECTED = ['resume_rejected','interview_rejected','offer_declined'];
+  function isRejected(r){
+    if (REJECTED.indexOf(r.prelimStatus) >= 0) return true;
+    if (REJECTED.indexOf(r.progressStatus) >= 0) return true;
+    return (r.interviews||[]).some(function(iv){ return iv.result === '未通过'; });
+  }
+  function isAccepted(r){ return r.progressStatus === 'offer_accepted'; }
+  function statusOf(r){
+    var pi = getPrelimInfo(r.prelimStatus||'');
+    var gi = getProgressInfo(r.progressStatus||'');
+    return gi.key ? { label: gi.label, cls: gi.cls } : { label: pi.label, cls: pi.cls };
+  }
+  recs.forEach(function(r){
+    var key = (r.company||'未知公司').trim().toLowerCase();
+    if (!groups[key]) { groups[key] = { company: r.company||'未知公司', recs: [] }; order.push(key); }
+    groups[key].recs.push(r);
+  });
+  order.forEach(function(key){
+    var g = groups[key];
+    var events = []; var terminal = '';
+    g.recs.forEach(function(r){
+      if (isRejected(r)) terminal = 'rejected';
+      if (isAccepted(r)) terminal = terminal || 'accepted';
+      if (r.date) events.push({ date: r.date, kind:'apply', position:r.position, channel:r.channel, city:r.city });
+      (r.interviews||[]).forEach(function(iv){ if (iv.date) events.push({ date: iv.date, kind:'interview', round:iv.round, method:iv.method, result:iv.result }); });
+    });
+    events.sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); });
+    if (terminal) {
+      var rejDate = '';
+      g.recs.forEach(function(r){ if (isRejected(r) && r.rejectedDate && (r.rejectedDate > rejDate)) rejDate = r.rejectedDate; });
+      var lastDate = rejDate || (events.length ? events[events.length-1].date : (g.recs[0].date||''));
+      events.push({ date: lastDate, kind:'end', terminal: terminal });
+    }
+    var rep = g.recs.find(function(r){ return isRejected(r) || isAccepted(r); }) || g.recs[0];
+    g.events = events; g.terminal = terminal; g.head = statusOf(rep);
+  });
+  order.sort(function(a,b){
+    function maxDate(g){ var m=''; g.recs.forEach(function(r){ if ((r.date||'')>m) m=r.date; }); return m; }
+    return maxDate(groups[b]).localeCompare(maxDate(groups[a]));
+  });
+  return { order: order, groups: groups };
+}
+
+function timelineEventHtml(ev) {
+  var dotColor='#2563eb', title='', desc='', extra='';
+  if (ev.kind==='apply') {
+    dotColor='#2563eb'; title='📨 投递简历';
+    desc = maskPosition(ev.position) + (ev.channel ? ' · 渠道：'+ev.channel : '') + (ev.city ? ' · '+ev.city : '');
+  } else if (ev.kind==='interview') {
+    var rc = { '通过':'#16a34a', '待定':'#d97706', '未通过':'#ef4444' };
+    dotColor = rc[ev.result] || '#7c3aed'; title = '🎤 ' + (ev.round||'面试');
+    desc = ev.method || '未填方式';
+    if (ev.result) extra = '<span style="color:'+dotColor+';margin-left:6px">结果：'+ev.result+'</span>';
+  } else if (ev.kind==='end') {
+    if (ev.terminal==='rejected') { dotColor='#dc2626'; title='⛔ 流程结束 · 被拒绝'; }
+    else { dotColor='#16a34a'; title='🎉 流程结束 · 已接受 Offer'; }
+  }
+  var cls = (ev.kind==='end') ? (ev.terminal==='rejected' ? ' rejected' : ' offer') : '';
+  var h = '<div class="timeline-item'+cls+'">';
+  h += '<div class="timeline-dot" style="background:'+dotColor+'"></div>';
+  h += '<div class="timeline-date">'+fmtDateFull(ev.date)+'</div>';
+  h += '<div class="timeline-content">';
+  h += '<div class="tc-company">'+title+extra+'</div>';
+  if (desc) h += '<div class="tc-role">'+desc+'</div>';
+  h += '</div></div>';
+  return h;
+}
+
+function renderTimelineGroupHtml(g) {
+  var r0 = g.recs[0];
+  var startD = g.events.length ? g.events[0].date : '';
+  var endEv = (g.events.length && g.events[g.events.length-1].kind==='end') ? g.events[g.events.length-1] : null;
+  var rangeTxt = startD ? ('投递 '+fmtDateFull(startD)) : '';
+  if (endEv && endEv.date !== startD) rangeTxt += ' → ' + fmtDateFull(endEv.date);
+  var html = '<div class="tl-group">';
+  html += '<div class="tl-group-head"><div><div class="tl-group-company">'+maskCompany(g.company)+'</div>';
+  html += '<div class="tl-group-meta">'+maskPosition(r0.position)+(r0.city?' · '+r0.city:'')+' · 共 '+g.recs.length+' 次投递</div></div>';
+  html += '<div class="tl-group-head-right"><span class="badge '+g.head.cls+'">'+g.head.label+'</span>';
+  if (rangeTxt) html += '<div class="tl-group-range">'+rangeTxt+'</div>';
+  html += '</div></div>';
+  html += '<div class="tl-group-body">';
+  g.events.forEach(function(ev){ html += timelineEventHtml(ev); });
+  html += '</div></div>';
+  return html;
+}
+
 function renderTimeline() {
-  var recs = DATA.records.slice().sort(function(a,b) { return (b.date||'').localeCompare(a.date||''); });
   var wrap = document.getElementById('timelineList');
   if (!wrap) return;
-  if (recs.length === 0) {
+  if (!DATA.records || DATA.records.length === 0) {
+    wrap.innerHTML = '<div class="empty-state"><div class="emoji">⏳</div>暂无记录</div>';
+    return;
+  }
+  var bg = buildTimelineGroups();
+  if (bg.order.length === 0) {
     wrap.innerHTML = '<div class="empty-state"><div class="emoji">⏳</div>暂无记录</div>';
     return;
   }
   var html = '';
-  for (var i=0; i<recs.length; i++) {
-    var r = recs[i];
-    var pi = getPrelimInfo(r.prelimStatus||'');
-    var gi = getProgressInfo(r.progressStatus||'');
-    var statusTags = '';
-    statusTags += '<span class="badge '+pi.cls+'" style="margin-left:4px">'+pi.label+'</span>';
-    if (gi.key) statusTags += ' <span class="badge '+gi.cls+'">'+gi.label+'</span>';
-    html += '<div class="timeline-item">';
-    html += '<div class="timeline-dot"></div>';
-    html += '<div class="timeline-date">'+fmtDateFull(r.date)+'</div>';
-    html += '<div class="timeline-content">';
-    html += '<div class="tc-company">'+maskCompany(r.company)+statusTags+'</div>';
-    html += '<div class="tc-role">'+maskPosition(r.position)+(r.city?' · '+r.city:'')+(r.channel?' · '+r.channel:'')+(r.salary?' · '+r.salary:'')+'</div>';
-    if (r.note) html += '<div class="tc-note">'+maskDetail(r.note)+'</div>';
-    if (r.interviews && r.interviews.length) {
-      var rounds = [];
-      for (var j=0; j<r.interviews.length; j++) {
-        var rv = r.interviews[j];
-        var label = rv.round || ('第'+(j+1)+'轮');
-        if (rv.result) label += '('+rv.result+')';
-        rounds.push(label);
-      }
-      html += '<div class="tc-note" style="margin-top:8px">🎤 面试 '+r.interviews.length+' 轮：'+rounds.join(' → ')+'</div>';
-    }
-    html += '</div></div>';
-  }
+  bg.order.forEach(function(k){ html += renderTimelineGroupHtml(bg.groups[k]); });
   wrap.innerHTML = html;
 }
 
@@ -2403,6 +2449,16 @@ function openModal(id) {
   if (titleEl) titleEl.textContent = id ? '编辑投递记录' : '新增投递记录';
 
   function setVal(elId, val) { var el = document.getElementById(elId); if (el) el.value = val; }
+function isRejectedStatus(ps, pp) {
+  var REJ = ['resume_rejected','interview_rejected','offer_declined'];
+  return REJ.indexOf(ps) >= 0 || REJ.indexOf(pp) >= 0;
+}
+function toggleRejectedDate() {
+  var ps = (document.getElementById('fPrelimStatus')||{}).value || '';
+  var pp = (document.getElementById('fProgressStatus')||{}).value || '';
+  var g = document.getElementById('rejectedDateGroup');
+  if (g) g.style.display = isRejectedStatus(ps, pp) ? 'block' : 'none';
+}
 
   if (id) {
     var r = null;
@@ -2415,6 +2471,7 @@ function openModal(id) {
     setVal('fDate', r.date||'');
     setVal('fPrelimStatus', r.prelimStatus||'pending');
     setVal('fProgressStatus', r.progressStatus||'');
+    setVal('fRejectedDate', r.rejectedDate||'');
     setVal('fSalary', r.salary||'');
     setVal('fContact', r.contact||'');
     setVal('fLink', r.link||'');
@@ -2433,6 +2490,7 @@ function openModal(id) {
     setVal('fLink', '');
     setVal('fNote', '');
   }
+  toggleRejectedDate();
   renderInterviewLog();
   m.classList.add('show');
 }
@@ -2470,11 +2528,11 @@ function renderInterviewLog() {
     html += '<select style="border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12px;color:var(--text)" onchange="tempInterviews['+idx+'].result=this.value"><option value="">面试结果</option><option'+(iv.result==='通过'?' selected':'')+'>通过</option><option'+(iv.result==='待定'?' selected':'')+'>待定</option><option'+(iv.result==='未通过'?' selected':'')+'>未通过</option></select>';
     html += '</div>';
     // Tech points
-    html += '<textarea placeholder="技术考察点 / 面试问题..." style="width:100%;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12px;min-height:40px;resize:vertical;font-family:inherit;margin-bottom:6px" onchange="tempInterviews['+idx+'].techPoints=this.value">'+(iv.techPoints||'')+'</textarea>';
+    html += '<textarea placeholder="技术考察点 / 面试问题..." style="width:100%;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12px;min-height:40px;max-height:160px;resize:vertical;overflow:auto;font-family:inherit;margin-bottom:6px" onchange="tempInterviews['+idx+'].techPoints=this.value">'+(iv.techPoints||'')+'</textarea>';
     // Summary
-    html += '<textarea placeholder="面试总结..." style="width:100%;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12px;min-height:50px;resize:vertical;font-family:inherit;margin-bottom:6px" onchange="tempInterviews['+idx+'].summary=this.value">'+(iv.summary||'')+'</textarea>';
+    html += '<textarea placeholder="面试总结..." style="width:100%;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12px;min-height:50px;max-height:160px;resize:vertical;overflow:auto;font-family:inherit;margin-bottom:6px" onchange="tempInterviews['+idx+'].summary=this.value">'+(iv.summary||'')+'</textarea>';
     // Self eval
-    html += '<textarea placeholder="自我评价..." style="width:100%;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12px;min-height:40px;resize:vertical;font-family:inherit" onchange="tempInterviews['+idx+'].selfEval=this.value">'+(iv.selfEval||'')+'</textarea>';
+    html += '<textarea placeholder="自我评价..." style="width:100%;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12px;min-height:40px;max-height:160px;resize:vertical;overflow:auto;font-family:inherit" onchange="tempInterviews['+idx+'].selfEval=this.value">'+(iv.selfEval||'')+'</textarea>';
     html += '</div>';
   }
   wrap.innerHTML = html;
@@ -2508,6 +2566,7 @@ function saveRecord() {
     contact: gv('fContact'),
     link: gv('fLink'),
     note: gv('fNote'),
+    rejectedDate: (document.getElementById('fRejectedDate')||{}).value || '',
     interviews: []
   };
   for (var i=0; i<tempInterviews.length; i++) {
@@ -2522,7 +2581,10 @@ function saveRecord() {
   }
 
   // Auto-compute prelimStatus and progressStatus based on interviews
-  if (rec.interviews.length > 0) {
+  // 锁定终态：手动选了被拒/谈薪/已接受/已拒绝offer 时，不自动覆盖（与小程序一致）
+  var lockedStatus = ['interview_rejected','negotiate','offer_accepted','offer_declined'];
+  if (lockedStatus.indexOf(rec.progressStatus) === -1) {
+    if (rec.interviews.length > 0) {
     // Has interviews → ensure prelimStatus is at least screening_pass
     if (!rec.prelimStatus || rec.prelimStatus === 'pending' || rec.prelimStatus === 'applied' || rec.prelimStatus === 'screening') {
       rec.prelimStatus = 'screening_pass';
@@ -2538,6 +2600,7 @@ function saveRecord() {
   } else {
     // No interviews → clear progressStatus
     rec.progressStatus = '';
+  }
   }
 
   if (editingId) {
@@ -3252,26 +3315,63 @@ loadData(function() {
       }
       var sourceData = fetchRows[0].data;
 
-      // 2. DELETE existing target row (if any), then INSERT — guaranteed replace
-      await fetch(SUPA_URL + '?user_id=eq.' + encodeURIComponent(toUser), {
-        method: 'DELETE',
-        headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
-      });
-
-      var insertRes = await fetch(SUPA_URL, {
-        method: 'POST',
+      // 2. PATCH with return=minimal (return=representation causes 409 on Supabase)
+      var patchRes = await fetch(SUPA_URL + '?user_id=eq.' + encodeURIComponent(toUser), {
+        method: 'PATCH',
         headers: {
           'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY,
           'Content-Type': 'application/json', 'Prefer': 'return=minimal'
         },
-        body: JSON.stringify({ user_id: toUser, data: sourceData, updated_at: new Date().toISOString() })
+        body: JSON.stringify({ data: sourceData, updated_at: new Date().toISOString() })
       });
-      if (!insertRes.ok) {
-        throw new Error('写入失败 (HTTP ' + insertRes.status + ')');
+      if (!patchRes.ok) throw new Error('PATCH 失败 (HTTP ' + patchRes.status + ')');
+
+      // 3. Verify: read back to check if row existed
+      var verifyRes = await fetch(SUPA_URL + '?user_id=eq.' + encodeURIComponent(toUser) + '&select=data', {
+        headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
+      });
+      var verifyRows = verifyRes.ok ? await verifyRes.json() : [];
+      if (!verifyRows || verifyRows.length === 0 || !verifyRows[0].data) {
+        // Row didn't exist — create empty row, then PATCH again
+        var createRes = await fetch(SUPA_URL, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY,
+            'Content-Type': 'application/json', 'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({
+            user_id: toUser,
+            data: { records: [], settings: {} },
+            updated_at: new Date().toISOString()
+          })
+        });
+        if (!createRes.ok) {
+          throw new Error('目标账号数据行创建失败 (HTTP ' + createRes.status + ')。请先用目标账号登录一次再分享');
+        }
+        // PATCH again with actual data
+        var patchRes2 = await fetch(SUPA_URL + '?user_id=eq.' + encodeURIComponent(toUser), {
+          method: 'PATCH',
+          headers: {
+            'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY,
+            'Content-Type': 'application/json', 'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({ data: sourceData, updated_at: new Date().toISOString() })
+        });
+        if (!patchRes2.ok) throw new Error('数据写入失败 (HTTP ' + patchRes2.status + ')');
+        // Verify again
+        var verifyRes2 = await fetch(SUPA_URL + '?user_id=eq.' + encodeURIComponent(toUser) + '&select=data', {
+          headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
+        });
+        verifyRows = verifyRes2.ok ? await verifyRes2.json() : [];
       }
 
-      var recordCount = sourceData.records ? sourceData.records.length : 0;
-      shareMsg.textContent = '分享成功！已将「'+fromUser+'」的 ' + recordCount + ' 条求职记录同步到「'+toUser+'」';
+      // 4. Final verification
+      if (!verifyRows || verifyRows.length === 0 || !verifyRows[0].data || !verifyRows[0].data.records) {
+        throw new Error('验证失败：数据库中未找到目标数据');
+      }
+      var verifyCount = verifyRows[0].data.records ? verifyRows[0].data.records.length : 0;
+
+      shareMsg.textContent = '分享成功！已将「'+fromUser+'」的 ' + verifyCount + ' 条求职记录同步到「'+toUser+'」（已验证）';
       shareMsg.className = 'admin-msg success';
       shareWarn.style.display = 'none';
       shareFromUser.value = '';
