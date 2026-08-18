@@ -800,6 +800,7 @@ tr:hover td { background:#f8fafc; }
         <span>求职记录</span>
       </div>
       <div class="today" id="todayDate"></div>
+      <span id="demoBadge" style="display:none;font-size:11px;padding:3px 10px;border-radius:20px;margin-left:8px;font-weight:500;background:rgba(255,255,255,0.18);color:#fff">演示数据</span>
       <span id="syncBadge" style="display:none;font-size:11px;padding:3px 10px;border-radius:20px;margin-left:8px;font-weight:500">离线</span>
       <button class="contact-link" id="contactBtn" title="联系我">✉ <span class="ct-text">联系我</span></button>
       <button class="login-link" id="loginBtn" title="登录以编辑数据">登录</button>
@@ -1389,7 +1390,9 @@ function doLogout() {
 function updateLoginUI() {
   var btn = document.getElementById('loginBtn');
   var adminBtn = document.getElementById('adminBtn');
+  var demoBadge = document.getElementById('demoBadge');
   if (currentUser) {
+    if (demoBadge) demoBadge.style.display = 'none';
     btn.textContent = currentUser.username;
     btn.className = 'login-link logged';
     btn.title = '点击退出登录';
@@ -1402,6 +1405,7 @@ function updateLoginUI() {
     btn.className = 'login-link';
     btn.title = '登录以编辑数据';
     if (adminBtn) adminBtn.style.display = 'none';
+    if (demoBadge) demoBadge.style.display = 'inline-block';
   }
   // Toggle locked class on all action elements
   var actionEls = document.querySelectorAll('.act-lock');
@@ -1418,6 +1422,7 @@ function updateLoginUI() {
 
 // ==================== Data ====================
 var DATA = { records: [] };
+var DEMO_MODE = false;  // true 表示当前展示的是演示数据（未登录且无真实数据）
 var editingId = null;
 var tempInterviews = [];
 
@@ -1444,10 +1449,18 @@ function loadUserData(username, callback) {
         if (!DATA.settings.dashSections) DATA.settings.dashSections = ['records','interviews','interview_records','stats','timeline'];
         // Migrate old records
         migrateRecords();
+        // 登录后强制剔除任何演示数据（防止云端残留演示记录被显示，也清理旧版未打标的演示数据）
+        DATA.records = cleanDemoRecords(DATA.records);
+        DEMO_MODE = false;
         saveDataLocal();
+        // 若清理后云端数据发生变化，回写云端
+        if (currentUser && DATA.records.length !== (rows[0].data.records || []).length) {
+          syncToServer();
+        }
       } else {
         // New user, create empty row
         DATA = { records: [], settings: { dashSections: ['records','interviews','interview_records','stats','timeline'] } };
+        DEMO_MODE = false;
         createUserDataRow(username);
       }
       if (callback) callback();
@@ -1678,7 +1691,37 @@ function seedDemo() {
     { id:uid(), company:'SHEIN', position:'前端开发工程师', city:'南京', channel:'官网',
       date:'', prelimStatus:'pending', progressStatus:'', salary:'', contact:'', link:'', note:'跨境电商，先记下来准备投', interviews:[] }
   ];
+  // 标记演示数据：登录后会被强制剔除，绝不混入真实数据
+  DATA.records.forEach(function(r) { r._demo = true; });
+  DEMO_MODE = true;
   saveData();
+}
+
+// 演示数据特征库（用于清理旧版未打 _demo 标记的演示记录）
+var DEMO_SIGNATURES = [
+  { company:'字节跳动', position:'前端开发工程师', city:'深圳', note:'React + TypeScript + 微前端，团队做飞书方向' },
+  { company:'腾讯', position:'高级Web前端工程师', city:'深圳', note:'T9级别，做小程序中台' },
+  { company:'阿里巴巴', position:'前端技术专家', city:'杭州', note:'P7级别，数据可视化方向' },
+  { company:'美团', position:'前端开发', city:'北京', note:'到店事业群，薪资未达预期' },
+  { company:'小红书', position:'前端工程师', city:'上海', note:'社区方向，团队氛围好' },
+  { company:'华为', position:'前端开发工程师', city:'东莞', note:'简历未通过筛选，专业方向不太匹配' },
+  { company:'快手', position:'资深前端开发', city:'北京', note:'直播业务线' },
+  { company:'拼多多', position:'前端开发工程师', city:'上海', note:'电商前端，投递后暂无回复' },
+  { company:'网易', position:'高级前端工程师', city:'杭州', note:'云音乐部门，已收到笔试通知' },
+  { company:'SHEIN', position:'前端开发工程师', city:'南京', note:'跨境电商，先记下来准备投' }
+];
+function isDemoRecord(r) {
+  if (!r) return false;
+  if (r._demo) return true;
+  for (var i = 0; i < DEMO_SIGNATURES.length; i++) {
+    var s = DEMO_SIGNATURES[i];
+    if (r.company === s.company && r.position === s.position && r.city === s.city && r.note === s.note) return true;
+  }
+  return false;
+}
+function cleanDemoRecords(records) {
+  if (!records) return records;
+  return records.filter(function(r) { return !isDemoRecord(r); });
 }
 
 // ==================== Helpers ====================
