@@ -247,7 +247,9 @@ tr:hover td { background:#f8fafc; }
 .tl-group-body { padding:14px 16px 4px; }
 
 /* Stats page */
+.stats-date { font-size:22px; font-weight:700; color:#1e293b; margin-bottom:16px; letter-spacing:0.5px; }
 .stats-charts { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+.chart-box { width:100%; height:260px; }
 
 /* Bar chart (pure CSS) */
 .bar-chart { display:flex; flex-direction:column; gap:8px; }
@@ -771,12 +773,12 @@ tr:hover td { background:#f8fafc; }
 .card-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
 .card-title { font-size:16px; font-weight:700; color:#1e293b; }
 
-/* KPI 概览 */
+/* KPI 概览（参考截图卡片风格） */
 .stats-kpi { margin-bottom:20px; }
-.kpi-row { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; }
-.kpi-card { background:#fff; border-radius:14px; padding:16px 8px; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
-.kpi-num { font-size:26px; font-weight:800; line-height:1; }
-.kpi-label { font-size:12px; color:#64748b; margin-top:6px; }
+.kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+.kpi-card { background:#fff; border-radius:16px; padding:20px 8px; text-align:center; box-shadow:0 4px 14px rgba(30,41,59,0.04); border:1px solid var(--border); }
+.kpi-num { font-size:32px; font-weight:800; line-height:1; }
+.kpi-label { font-size:13px; color:#64748b; margin-top:8px; font-weight:500; }
 
 /* 漏斗 */
 .funnel-row { display:flex; align-items:center; gap:10px; margin-bottom:12px; min-width:0; }
@@ -786,12 +788,14 @@ tr:hover td { background:#f8fafc; }
 .funnel-val { font-size:14px; font-weight:700; color:#1e293b; width:32px; text-align:right; flex-shrink:0; }
 
 @media(max-width:768px) {
-  .kpi-row { grid-template-columns:repeat(3,1fr); gap:8px; }
-  .kpi-card { padding:12px 4px; }
-  .kpi-num { font-size:20px; }
+  .kpi-row { grid-template-columns:repeat(2,1fr); gap:12px; }
+  .kpi-card { padding:16px 4px; }
+  .kpi-num { font-size:26px; }
+  .stats-charts { grid-template-columns:1fr; }
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
 </head>
 <body>
 
@@ -951,30 +955,36 @@ tr:hover td { background:#f8fafc; }
 
   <!-- Stats Page -->
   <div class="page" id="page-stats">
-    <!-- KPI 概览 + 漏斗 -->
+    <div class="stats-date" id="statsDate">2026.08.05</div>
     <div class="stats-kpi" id="statsKpi"></div>
-    <div class="card" style="margin-bottom:20px">
-      <div class="card-head"><div class="card-title">📊 求职漏斗</div></div>
-      <div class="card-body" id="statsFunnel"></div>
-    </div>
     <div class="stats-charts">
       <div class="card">
-        <div class="card-head"><div class="card-title">状态分布</div></div>
-        <div class="card-body" id="statusPie"></div>
+        <div class="card-head"><div class="card-title">投递趋势</div></div>
+        <div class="card-body"><div id="trendChart" class="chart-box" style="height:260px"></div></div>
       </div>
       <div class="card">
-        <div class="card-head"><div class="card-title">投递渠道 Top 10</div></div>
-        <div class="card-body" id="channelBars"></div>
+        <div class="card-head"><div class="card-title">进度分布</div></div>
+        <div class="card-body"><div id="progressPieChart" class="chart-box" style="height:260px"></div></div>
       </div>
     </div>
     <div class="stats-charts" style="margin-top:20px">
       <div class="card">
-        <div class="card-head"><div class="card-title">具体进展分布</div></div>
-        <div class="card-body" id="progressBars"></div>
+        <div class="card-head"><div class="card-title">📊 求职漏斗</div></div>
+        <div class="card-body" id="statsFunnel"></div>
       </div>
       <div class="card">
+        <div class="card-head"><div class="card-title">投递渠道 Top 10</div></div>
+        <div class="card-body"><div id="channelChart" class="chart-box" style="height:260px"></div></div>
+      </div>
+    </div>
+    <div class="stats-charts" style="margin-top:20px">
+      <div class="card">
         <div class="card-head"><div class="card-title">最近8周投递趋势</div></div>
-        <div class="card-body" id="weeklyBars"></div>
+        <div class="card-body"><div id="weeklyChart" class="chart-box" style="height:260px"></div></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">城市/岗位分布</div></div>
+        <div class="card-body" id="cityJobBars"></div>
       </div>
     </div>
   </div>
@@ -2652,24 +2662,28 @@ function renderStats() {
   var recs = DATA.records;
   var total = recs.length;
 
-  // KPI 概览
-  var inProgress = 0, offers = 0, rejected = 0, interviews = 0;
-  var PROGRESS_KEYS = ['exam','assessment','ai_interview','round1','round2','final_round','negotiate'];
+  // 顶部日期（参考截图 2026.08.05 风格）
+  var dateEl = document.getElementById('statsDate');
+  if (dateEl) {
+    var now = new Date();
+    dateEl.textContent = now.getFullYear() + '.' + String(now.getMonth()+1).padStart(2,'0') + '.' + String(now.getDate()).padStart(2,'0');
+  }
+
+  // KPI 概览（截图：总投递/进行中/拒信/Offer）
   var REJECT_KEYS = ['resume_rejected','interview_rejected','offer_declined'];
-  recs.forEach(function(r) {
-    if (PROGRESS_KEYS.indexOf(r.progressStatus) >= 0) inProgress++;
-    if (r.progressStatus === 'offer_accepted') offers++;
-    if (REJECT_KEYS.indexOf(r.prelimStatus) >= 0 || REJECT_KEYS.indexOf(r.progressStatus) >= 0) rejected++;
-    interviews += (r.interviews || []).length;
-  });
+  var offers = recs.filter(function(r){ return r.progressStatus === 'offer_accepted'; }).length;
+  var rejected = recs.filter(function(r){ return REJECT_KEYS.indexOf(r.prelimStatus) >= 0 || REJECT_KEYS.indexOf(r.progressStatus) >= 0; }).length;
+  var pending = recs.filter(function(r){ return !r.prelimStatus || r.prelimStatus === 'pending'; }).length;
+  var inProgress = total - rejected - offers - pending;
+  if (inProgress < 0) inProgress = 0;
+
   var kpiEl = document.getElementById('statsKpi');
   if (kpiEl) {
     var kpis = [
-      { n: total, l: '累计投递', c: '#2563eb' },
-      { n: inProgress, l: '进行中', c: '#ea580c' },
-      { n: interviews, l: '面试次数', c: '#7c3aed' },
-      { n: offers, l: 'Offer', c: '#16a34a' },
-      { n: rejected, l: '被拒', c: '#ef4444' }
+      { n: total, l: '总投递数', c: '#22c55e' },
+      { n: inProgress, l: '进行中', c: '#2563eb' },
+      { n: rejected, l: '拒信', c: '#f59e0b' },
+      { n: offers, l: 'Offer', c: '#0891b2' }
     ];
     var kh = '<div class="kpi-row">';
     kpis.forEach(function(k) {
@@ -2677,6 +2691,61 @@ function renderStats() {
     });
     kh += '</div>';
     kpiEl.innerHTML = kh;
+  }
+
+  // ECharts 初始化容器
+  if (!window._statsCharts) window._statsCharts = {};
+  if (typeof echarts !== 'undefined') {
+    ['trendChart','progressPieChart','channelChart','weeklyChart'].forEach(function(id){
+      if (window._statsCharts[id]) { window._statsCharts[id].dispose(); window._statsCharts[id] = null; }
+      var el = document.getElementById(id);
+      if (el) window._statsCharts[id] = echarts.init(el);
+    });
+  }
+
+  // 投递趋势折线图（最近7天）
+  var trendLabels = [], trendValues = [];
+  var today = new Date();
+  for (var i=6; i>=0; i--) {
+    var d = new Date(today); d.setDate(d.getDate()-i);
+    var ds = d.toISOString().slice(0,10);
+    var label = String(d.getMonth()+1).padStart(2,'0') + '.' + String(d.getDate()).padStart(2,'0');
+    trendLabels.push(label);
+    trendValues.push(recs.filter(function(r){ return r.date === ds; }).length);
+  }
+  if (window._statsCharts && window._statsCharts.trendChart) {
+    window._statsCharts.trendChart.setOption({
+      tooltip: { trigger: 'axis' },
+      grid: { top: 30, right: 20, bottom: 30, left: 40 },
+      xAxis: { type: 'category', data: trendLabels, axisLine: { lineStyle: { color: '#cbd5e1' } }, axisLabel: { color: '#64748b' } },
+      yAxis: { type: 'value', minInterval: 1, splitLine: { lineStyle: { color: '#f1f5f9' } }, axisLabel: { color: '#64748b' } },
+      series: [{
+        data: trendValues, type: 'line', smooth: false, symbol: 'circle', symbolSize: 8,
+        itemStyle: { color: '#2563eb', borderWidth: 2, borderColor: '#fff' },
+        lineStyle: { width: 3, color: '#2563eb' },
+        label: { show: true, position: 'top', color: '#2563eb', fontWeight: 600 }
+      }]
+    });
+  }
+
+  // 进度分布饼图（已投递/测评/简历挂/未标记）
+  var pieData = [
+    { value: recs.filter(function(r){ return r.progressStatus === 'applied' || (!r.progressStatus && r.prelimStatus === 'applied'); }).length, name: '已投递', itemStyle: { color: '#2563eb' }},
+    { value: recs.filter(function(r){ return r.progressStatus === 'exam' || r.progressStatus === 'assessment' || r.progressStatus === 'ai_interview'; }).length, name: '测评', itemStyle: { color: '#84cc16' }},
+    { value: recs.filter(function(r){ return r.prelimStatus === 'resume_rejected'; }).length, name: '简历挂', itemStyle: { color: '#f59e0b' }},
+    { value: recs.filter(function(r){ return !r.prelimStatus || r.prelimStatus === 'pending'; }).length, name: '未标记', itemStyle: { color: '#22d3ee' }}
+  ];
+  if (window._statsCharts && window._statsCharts.progressPieChart) {
+    window._statsCharts.progressPieChart.setOption({
+      tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+      legend: { top: 'middle', right: 10, orient: 'vertical', itemWidth: 10, itemHeight: 10, textStyle: { color: '#475569' } },
+      series: [{
+        type: 'pie', radius: '70%', center: ['38%', '50%'], data: pieData,
+        label: { show: true, formatter: '{b}\n{c}', color: '#475569' },
+        labelLine: { show: true, lineStyle: { color: '#cbd5e1' } },
+        itemStyle: { borderRadius: 4, borderColor: '#fff', borderWidth: 2 }
+      }]
+    });
   }
 
   // 求职漏斗（投递→初筛通过→面试→ Offer）
@@ -2703,33 +2772,7 @@ function renderStats() {
     funnelEl.innerHTML = fh;
   }
 
-  // Preliminary status pie
-  var preCount = {};
-  for (var i=0; i<recs.length; i++) {
-    var ps = recs[i].prelimStatus || 'pending';
-    preCount[ps] = (preCount[ps]||0) + 1;
-  }
-  var preKeys = Object.keys(preCount);
-  var pieEl = document.getElementById('statusPie');
-  if (pieEl && total > 0) {
-    var gradientParts = [];
-    var legendHtml = '<div style="font-weight:600;margin-bottom:6px;color:var(--text)">初步状态分布</div>';
-    var offset = 0;
-    for (var i=0; i<preKeys.length; i++) {
-      var k = preKeys[i];
-      var pct = preCount[k]/total*100;
-      var color = PRELIM_COLORS[k] || '#94a3b8';
-      var label = getPrelimInfo(k).label;
-      gradientParts.push(color+' '+offset+'% '+Math.round(offset+pct)+'%');
-      legendHtml += '<div class="pie-legend-item"><div class="pie-legend-dot" style="background:'+color+'"></div>'+label+'：'+preCount[k]+' ('+Math.round(pct)+'%)</div>';
-      offset = Math.round(offset+pct);
-    }
-    pieEl.innerHTML = '<div class="pie-wrap"><div class="pie-chart" style="background:conic-gradient('+gradientParts.join(',')+')"></div><div class="pie-legend">'+legendHtml+'</div></div>';
-  } else if (pieEl) {
-    pieEl.innerHTML = '<div class="empty-state"><div class="emoji">📊</div>暂无数据</div>';
-  }
-
-  // Channel bars
+  // 投递渠道 Top 10（ECharts 横向柱图）
   var cCount = {};
   for (var i=0; i<recs.length; i++) {
     var ch = recs[i].channel;
@@ -2737,36 +2780,23 @@ function renderStats() {
   }
   var chKeys = Object.keys(cCount);
   chKeys.sort(function(a,b) { return cCount[b]-cCount[a]; });
-  renderBarChart('channelBars', chKeys, cCount, BAR_COLORS);
+  chKeys = chKeys.slice(0, 10).reverse();
+  if (window._statsCharts && window._statsCharts.channelChart) {
+    window._statsCharts.channelChart.setOption({
+      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+      grid: { top: 10, right: 30, bottom: 20, left: 80 },
+      xAxis: { type: 'value', minInterval: 1, splitLine: { lineStyle: { color: '#f1f5f9' } }, axisLabel: { color: '#64748b' } },
+      yAxis: { type: 'category', data: chKeys, axisLine: { show: false }, axisTick: { show: false }, axisLabel: { color: '#475569' } },
+      series: [{
+        type: 'bar', data: chKeys.map(function(k){ return cCount[k]; }), barWidth: 16, itemStyle: { borderRadius: [0,8,8,0], color: '#3b82f6' },
+        label: { show: true, position: 'right', color: '#475569' }
+      }]
+    });
+  }
 
-  // Progress status bars
-  var progCount = {};
-  for (var i=0; i<recs.length; i++) {
-    var pg = recs[i].progressStatus||'';
-    if (pg) progCount[pg] = (progCount[pg]||0) + 1;
-  }
-  var progLabels = [];
-  for (var i=0; i<PROGRESS_STATUS_LIST.length; i++) {
-    if (PROGRESS_STATUS_LIST[i].key && progCount[PROGRESS_STATUS_LIST[i].key]) {
-      progLabels.push(PROGRESS_STATUS_LIST[i].label);
-      progCount[PROGRESS_STATUS_LIST[i].label] = progCount[PROGRESS_STATUS_LIST[i].key];
-    }
-  }
-  var progColors = [];
-  for (var i=0; i<progLabels.length; i++) {
-    for (var j=0; j<PROGRESS_STATUS_LIST.length; j++) {
-      if (PROGRESS_STATUS_LIST[j].label === progLabels[i]) {
-        progColors.push(PROGRESS_COLORS[PROGRESS_STATUS_LIST[j].key] || '#94a3b8');
-        break;
-      }
-    }
-  }
-  renderBarChart('progressBars', progLabels, progCount, progColors.length?progColors:['#94a3b8']);
-
-  // Weekly bars
+  // 最近8周投递趋势（ECharts 柱状图）
   var weeks = 8;
   var wLabels = [], wCounts = [];
-  var today = new Date();
   for (var i=weeks-1; i>=0; i--) {
     var wEnd = new Date(today); wEnd.setDate(wEnd.getDate()-i*7);
     var wStart = new Date(wEnd); wStart.setDate(wStart.getDate()-6);
@@ -2779,7 +2809,44 @@ function renderStats() {
     }
     wCounts.push(cnt);
   }
-  renderBarChart('weeklyBars', wLabels, wCounts, ['#2563eb']);
+  if (window._statsCharts && window._statsCharts.weeklyChart) {
+    window._statsCharts.weeklyChart.setOption({
+      tooltip: { trigger: 'axis' },
+      grid: { top: 20, right: 20, bottom: 30, left: 40 },
+      xAxis: { type: 'category', data: wLabels, axisLine: { lineStyle: { color: '#cbd5e1' } }, axisLabel: { color: '#64748b' } },
+      yAxis: { type: 'value', minInterval: 1, splitLine: { lineStyle: { color: '#f1f5f9' } }, axisLabel: { color: '#64748b' } },
+      series: [{
+        type: 'bar', data: wCounts, barWidth: '50%', itemStyle: { borderRadius: [6,6,0,0], color: '#2563eb' },
+        label: { show: true, position: 'top', color: '#2563eb' }
+      }]
+    });
+  }
+
+  // 城市/岗位分布（CSS 条形图）
+  var cityCount = {}, jobCount = {};
+  for (var i=0; i<recs.length; i++) {
+    if (recs[i].city) cityCount[recs[i].city] = (cityCount[recs[i].city]||0)+1;
+    if (recs[i].job) jobCount[recs[i].job] = (jobCount[recs[i].job]||0)+1;
+  }
+  var cityKeys = Object.keys(cityCount).sort(function(a,b){ return cityCount[b]-cityCount[a]; });
+  var jobKeys = Object.keys(jobCount).sort(function(a,b){ return jobCount[b]-jobCount[a]; });
+  var cityJobEl = document.getElementById('cityJobBars');
+  if (cityJobEl) {
+    cityJobEl.innerHTML = '<div style="margin-bottom:18px"><div style="font-weight:600;margin-bottom:10px;color:#1e293b">城市 Top 5</div><div id="cityBarsSub"></div></div>' +
+                          '<div><div style="font-weight:600;margin-bottom:10px;color:#1e293b">岗位 Top 5</div><div id="jobBarsSub"></div></div>';
+    renderBarChart('cityBarsSub', cityKeys.slice(0,5), cityCount, ['#0d9488']);
+    renderBarChart('jobBarsSub', jobKeys.slice(0,5), jobCount, ['#7c3aed']);
+  }
+
+  // 响应式：窗口变化时重绘
+  if (!window._statsResizeBound) {
+    window.addEventListener('resize', function(){
+      if (window._statsCharts) {
+        Object.keys(window._statsCharts).forEach(function(k){ if (window._statsCharts[k]) window._statsCharts[k].resize(); });
+      }
+    });
+    window._statsResizeBound = true;
+  }
 }
 
 function renderBarChart(elId, labels, countMap, colors) {
