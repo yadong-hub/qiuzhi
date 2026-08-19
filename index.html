@@ -1259,6 +1259,12 @@ console.log('求职记录 JS 开始加载...');
 var STORAGE_KEY = 'job_tracker_data_v2';
 var SUPA_URL = 'https://aogcjeofzbaybleqxtoe.supabase.co/rest/v1/job_data';
 var SUPA_KEY = 'sb_publishable_q4Mi2PvK-dGJD3_KBKFn8g_5bBquN8q';
+var APP_KEY = 'qz-2026-iykJudF0ira1IPjiN_ityJCrpbw6hMcx';
+function supaHeaders(extra) {
+  var h = { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'x-app-key': APP_KEY };
+  if (extra) { for (var k in extra) h[k] = extra[k]; }
+  return h;
+}
 var SYNC_MODE = false;
 var saveTimer = null;
 
@@ -1350,7 +1356,7 @@ async function doLogin() {
 
   try {
     var res = await fetch(SUPA_ACCOUNTS + '?username=eq.' + encodeURIComponent(u) + '&select=password,role', {
-      headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
+      headers: supaHeaders()
     });
     if (!res.ok) throw new Error('Server error');
     var rows = await res.json();
@@ -1447,7 +1453,7 @@ function uid() {
 // Load user data from Supabase by username
 function loadUserData(username, callback) {
   fetch(SUPA_URL + '?user_id=eq.' + encodeURIComponent(username) + '&select=data', {
-    headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
+    headers: supaHeaders()
   })
     .then(function(res) {
       if (!res.ok) throw new Error('Supabase error');
@@ -1492,12 +1498,7 @@ function loadUserData(username, callback) {
 function createUserDataRow(username) {
   fetch(SUPA_URL, {
     method: 'POST',
-    headers: {
-      'apikey': SUPA_KEY,
-      'Authorization': 'Bearer ' + SUPA_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=minimal'
-    },
+    headers: supaHeaders({ 'Content-Type': 'application/json; charset=utf-8', 'Prefer': 'return=minimal' }),
     body: JSON.stringify({
       user_id: username,
       data: { records: [], settings: { dashSections: ['records','interviews','interview_records','stats','timeline'] } },
@@ -1559,7 +1560,7 @@ function loadData(callback) {
 
 function initSync(onDone) {
   fetch(SUPA_URL + '?user_id=eq.demo&select=data,updated_at', {
-    headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
+    headers: supaHeaders()
   })
     .then(function(res) {
       if (!res.ok) throw new Error('Supabase unreachable');
@@ -1599,12 +1600,7 @@ function pushToSupabase() {
   var uid = currentUser ? currentUser.username : 'demo';
   return fetch(SUPA_URL + '?user_id=eq.' + encodeURIComponent(uid), {
     method: 'PATCH',
-    headers: {
-      'apikey': SUPA_KEY,
-      'Authorization': 'Bearer ' + SUPA_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=minimal'
-    },
+    headers: supaHeaders({ 'Content-Type': 'application/json; charset=utf-8', 'Prefer': 'return=minimal' }),
     body: JSON.stringify({ data: DATA, updated_at: new Date().toISOString() })
   });
 }
@@ -2627,7 +2623,10 @@ function renderInterviewRecords() {
     // Meta
     html += '<div class="ir-meta">';
     if (it.method) html += '<span>'+it.method+'</span>';
-    if (it.duration) html += '<span>约 '+it.duration+' 分钟</span>';
+    if (it.duration) {
+      var dstr = String(it.duration).replace(/分钟$/, '').replace(/min$/i, '');
+      html += '<span>约 '+dstr+' 分钟</span>';
+    }
     if (it.interviewer) html += '<span>面试官：'+it.interviewer+'</span>';
     html += '</div>';
 
@@ -3789,7 +3788,7 @@ loadData(function() {
     accountTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:16px">加载中...</td></tr>';
     try {
       var res = await fetch(SUPA_ACCOUNTS + '?select=id,username,password,plain_password,role,created_at&order=created_at.desc', {
-        headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
+        headers: supaHeaders()
       });
       if (!res.ok) throw new Error('Fetch failed');
       var rows = await res.json();
@@ -3864,7 +3863,7 @@ loadData(function() {
       var hash = await sha256(newPwd);
       var res = await fetch(SUPA_ACCOUNTS + '?id=eq.' + resettingUserId, {
         method: 'PATCH',
-        headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json' },
+        headers: supaHeaders({ 'Content-Type': 'application/json; charset=utf-8' }),
         body: JSON.stringify({ password: hash, plain_password: newPwd })
       });
       if (!res.ok) throw new Error('更新失败');
@@ -3885,7 +3884,7 @@ loadData(function() {
     try {
       var res = await fetch(SUPA_ACCOUNTS + '?id=eq.' + uid, {
         method: 'PATCH',
-        headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json' },
+        headers: supaHeaders({ 'Content-Type': 'application/json; charset=utf-8' }),
         body: JSON.stringify({ role: newRole })
       });
       if (!res.ok) throw new Error('更新失败');
@@ -3903,7 +3902,7 @@ loadData(function() {
     try {
       var res = await fetch(SUPA_ACCOUNTS + '?id=eq.' + uid, {
         method: 'DELETE',
-        headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
+        headers: supaHeaders()
       });
       if (!res.ok) throw new Error('删除失败');
       createMsg.textContent = '账号 ' + uname + ' 已删除';
@@ -3950,12 +3949,7 @@ loadData(function() {
       var hash = await sha256(upass);
       var res = await fetch(SUPA_ACCOUNTS, {
         method: 'POST',
-        headers: {
-          'apikey': SUPA_KEY,
-          'Authorization': 'Bearer ' + SUPA_KEY,
-          'Content-Type': 'application/json',
-          'Prefer': 'return=representation'
-        },
+        headers: supaHeaders({ 'Content-Type': 'application/json; charset=utf-8', 'Prefer': 'return=representation' }),
         body: JSON.stringify({ username: uname, password: hash, plain_password: upass, role: urole })
       });
       if (!res.ok) {
@@ -4008,7 +4002,7 @@ loadData(function() {
     try {
       // 1. Fetch source user's data
       var fetchRes = await fetch(SUPA_URL + '?user_id=eq.' + encodeURIComponent(fromUser) + '&select=data', {
-        headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
+        headers: supaHeaders()
       });
       if (!fetchRes.ok) throw new Error('获取来源数据失败 (HTTP ' + fetchRes.status + ')');
       var fetchRows = await fetchRes.json();
@@ -4020,27 +4014,21 @@ loadData(function() {
       // 2. PATCH with return=minimal (return=representation causes 409 on Supabase)
       var patchRes = await fetch(SUPA_URL + '?user_id=eq.' + encodeURIComponent(toUser), {
         method: 'PATCH',
-        headers: {
-          'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY,
-          'Content-Type': 'application/json', 'Prefer': 'return=minimal'
-        },
+        headers: supaHeaders({ 'Content-Type': 'application/json; charset=utf-8', 'Prefer': 'return=minimal' }),
         body: JSON.stringify({ data: sourceData, updated_at: new Date().toISOString() })
       });
       if (!patchRes.ok) throw new Error('PATCH 失败 (HTTP ' + patchRes.status + ')');
 
       // 3. Verify: read back to check if row existed
       var verifyRes = await fetch(SUPA_URL + '?user_id=eq.' + encodeURIComponent(toUser) + '&select=data', {
-        headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
+        headers: supaHeaders()
       });
       var verifyRows = verifyRes.ok ? await verifyRes.json() : [];
       if (!verifyRows || verifyRows.length === 0 || !verifyRows[0].data) {
         // Row didn't exist — create empty row, then PATCH again
         var createRes = await fetch(SUPA_URL, {
           method: 'POST',
-          headers: {
-            'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY,
-            'Content-Type': 'application/json', 'Prefer': 'return=minimal'
-          },
+          headers: supaHeaders({ 'Content-Type': 'application/json; charset=utf-8', 'Prefer': 'return=minimal' }),
           body: JSON.stringify({
             user_id: toUser,
             data: { records: [], settings: {} },
@@ -4053,16 +4041,13 @@ loadData(function() {
         // PATCH again with actual data
         var patchRes2 = await fetch(SUPA_URL + '?user_id=eq.' + encodeURIComponent(toUser), {
           method: 'PATCH',
-          headers: {
-            'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY,
-            'Content-Type': 'application/json', 'Prefer': 'return=minimal'
-          },
+          headers: supaHeaders({ 'Content-Type': 'application/json; charset=utf-8', 'Prefer': 'return=minimal' }),
           body: JSON.stringify({ data: sourceData, updated_at: new Date().toISOString() })
         });
         if (!patchRes2.ok) throw new Error('数据写入失败 (HTTP ' + patchRes2.status + ')');
         // Verify again
         var verifyRes2 = await fetch(SUPA_URL + '?user_id=eq.' + encodeURIComponent(toUser) + '&select=data', {
-          headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
+          headers: supaHeaders()
         });
         verifyRows = verifyRes2.ok ? await verifyRes2.json() : [];
       }
