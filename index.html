@@ -905,10 +905,6 @@ tr:hover td { background:#f8fafc; }
           <select id="filterPrelimStatus"><option value="">全部初步状态</option></select>
           <select id="filterProgressStatus"><option value="">全部具体进展</option></select>
           <select id="filterChannel"><option value="">全部渠道</option></select>
-          <select id="filterFollowUp">
-            <option value="">全部（含待跟进）</option>
-            <option value="1">仅待跟进</option>
-          </select>
           <select id="sortRecords">
             <option value="date_desc">日期↓(新→旧)</option>
             <option value="date_asc">日期↑(旧→新)</option>
@@ -1794,7 +1790,7 @@ function needsFollowUp(r) {
   if (TERMINAL_KEYS.indexOf(r.prelimStatus) >= 0 || TERMINAL_KEYS.indexOf(r.progressStatus) >= 0) return false;
   var la = lastActivityDate(r);
   if (!la) return false;
-  return daysSince(la) >= FOLLOW_UP_DAYS;
+  return false; // 待跟进提醒功能已取消
 }
 // 测评截止时间（Date 对象或 null）。优先用手动设置的 assessmentDeadline（精确到分钟）；
 // 旧数据没有 deadline 时，退回 assessmentStart + assessmentHours 兜底。
@@ -1964,7 +1960,6 @@ function renderDashboard() {
     { icon:'📭', label:'累计投递', value:total, sub:'<span style="color:#2563eb">'+(plannedCount>0?('含'+plannedCount+'条待投递'):'持续投递中')+'</span>' },
     { icon:'🎯', label:'面试流程中', value:interviewing, sub:'回复率 '+responseRate+'%' },
     { icon:'🎉', label:'获得Offer', value:offers, sub:'Offer率 '+offerRate+'%' },
-    { icon:'⏰', label:'待跟进', value:followUpCount, sub:'超过'+FOLLOW_UP_DAYS+'天无动静' },
     { icon:'📋', label:'待投递', value:plannedCount, sub:'计划投递的企业' }
   ];
   var html = '';
